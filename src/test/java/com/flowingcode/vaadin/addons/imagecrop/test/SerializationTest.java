@@ -1,8 +1,8 @@
 /*-
  * #%L
- * Template Add-on
+ * Image Crop Add-on
  * %%
- * Copyright (C) 2023 Flowing Code
+ * Copyright (C) 2024 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,8 @@
  * limitations under the License.
  * #L%
  */
-package com.flowingcode.vaadin.addons.template.test;
+package com.flowingcode.vaadin.addons.imagecrop.test;
 
-import com.flowingcode.vaadin.addons.template.TemplateAddon;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -27,6 +26,9 @@ import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import org.junit.Assert;
 import org.junit.Test;
+
+import com.flowingcode.vaadin.addons.imagecrop.ImageCrop;
+import com.vaadin.flow.component.html.Image;
 
 public class SerializationTest {
 
@@ -44,7 +46,7 @@ public class SerializationTest {
   @Test
   public void testSerialization() throws ClassNotFoundException, IOException {
     try {
-      testSerializationOf(new TemplateAddon());
+      testSerializationOf(new ImageCrop(new Image()));
     } catch (Exception e) {
       Assert.fail("Problem while testing serialization: " + e.getMessage());
     }

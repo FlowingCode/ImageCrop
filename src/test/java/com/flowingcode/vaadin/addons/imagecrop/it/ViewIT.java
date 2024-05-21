@@ -1,8 +1,8 @@
 /*-
  * #%L
- * Template Add-on
+ * Image Crop Add-on
  * %%
- * Copyright (C) 2023 Flowing Code
+ * Copyright (C) 2024 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,15 +18,15 @@
  * #L%
  */
 
-package com.flowingcode.vaadin.addons.template.it;
+package com.flowingcode.vaadin.addons.imagecrop.it;
 
 import static org.hamcrest.Matchers.is;
 import static org.hamcrest.Matchers.not;
-import static org.junit.Assert.assertThat;
 
 import com.vaadin.testbench.TestBenchElement;
 import org.hamcrest.Description;
 import org.hamcrest.Matcher;
+import org.hamcrest.MatcherAssert;
 import org.hamcrest.TypeSafeDiagnosingMatcher;
 import org.junit.Test;
 
@@ -58,7 +58,7 @@ public class ViewIT extends AbstractViewTest {
 
   @Test
   public void componentWorks() {
-    TestBenchElement element = $("paper-input").first();
-    assertThat(element, hasBeenUpgradedToCustomElement);
+    TestBenchElement element = $("image-crop").first();
+    MatcherAssert.assertThat(element, hasBeenUpgradedToCustomElement);
   }
 }

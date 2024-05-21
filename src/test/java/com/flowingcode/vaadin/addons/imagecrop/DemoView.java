@@ -1,8 +1,8 @@
 /*-
  * #%L
- * Template Add-on
+ * Image Crop Add-on
  * %%
- * Copyright (C) 2023 Flowing Code
+ * Copyright (C) 2024 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
  * #L%
  */
 
-package com.flowingcode.vaadin.addons.template;
+package com.flowingcode.vaadin.addons.imagecrop;
 
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.BeforeEnterEvent;
@@ -31,6 +31,6 @@ public class DemoView extends VerticalLayout implements BeforeEnterObserver {
 
   @Override
   public void beforeEnter(BeforeEnterEvent event) {
-    event.forwardTo(TemplateDemoView.class);
+    event.forwardTo(ImageCropDemoView.class);
   }
 }

@@ -5,22 +5,22 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.flowingcode.vaadin.addons</groupId>
-    <artifactId>template-addon</artifactId>
+    <artifactId>image-crop-addon</artifactId>
     <version>1.0.0-SNAPSHOT</version>
-    <name>Template Add-on</name>
-    <description>Template Add-on for Vaadin Flow</description>
+    <name>Image Crop Add-on</name>
+    <description>Image Crop Add-on for Vaadin Flow</description>
     <url>https://www.flowingcode.com/en/open-source/</url>
 
     <properties>
-        <vaadin.version>24.3.0</vaadin.version>
+        <vaadin.version>24.4.6</vaadin.version>
         <selenium.version>4.10.0</selenium.version>
         <maven.compiler.source>17</maven.compiler.source>
         <maven.compiler.target>17</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <drivers.dir>${project.basedir}/drivers</drivers.dir>
-        <jetty.version>11.0.12</jetty.version>
-        <flowingcode.commons.demo.version>3.9.0</flowingcode.commons.demo.version>
+        <jetty.version>11.0.21</jetty.version>
+        <flowingcode.commons.demo.version>4.1.0</flowingcode.commons.demo.version>
         <frontend.hotdeploy>true</frontend.hotdeploy>
     </properties>
 
@@ -29,7 +29,7 @@
         <url>https://www.flowingcode.com</url>
     </organization>
 
-    <inceptionYear>2023</inceptionYear>
+    <inceptionYear>2024</inceptionYear>
     <licenses>
         <license>
             <name>Apache 2</name>
@@ -39,9 +39,9 @@
     </licenses>
 
     <scm>
-        <url>https://github.com/FlowingCode/AddonStarter24</url>
-        <connection>scm:git:git://github.com/FlowingCode/AddonStarter24.git</connection>
-        <developerConnection>scm:git:ssh://git@github.com:/FlowingCode/AddonStarter24.git</developerConnection>
+        <url>https://github.com/FlowingCode/ImageCrop</url>
+        <connection>scm:git:git://github.com/FlowingCode/ImageCrop.git</connection>
+        <developerConnection>scm:git:ssh://git@github.com:/FlowingCode/ImageCrop.git</developerConnection>
         <tag>master</tag>
     </scm>
 
@@ -156,6 +156,12 @@
             <version>5.1.1</version>
             <scope>test</scope>
         </dependency>
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>3.12.4</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -254,7 +260,7 @@
                 <artifactId>jetty-maven-plugin</artifactId>
                 <version>${jetty.version}</version>
                 <configuration>
-                    <scanIntervalSeconds>3</scanIntervalSeconds>
+                    <scan>3</scan>
                     <!-- Use test scope because the UI/demo classes are in the test package. -->
                     <useTestScope>true</useTestScope>
                     <webApp>
@@ -363,7 +369,7 @@
                         <artifactId>jetty-maven-plugin</artifactId>
                         <version>${jetty.version}</version>
                         <configuration>
-                            <scanIntervalSeconds>0</scanIntervalSeconds>
+                            <scan>0</scan>
                             <supportedPackagings>
                                 <supportedPackaging>jar</supportedPackaging>
                             </supportedPackagings>

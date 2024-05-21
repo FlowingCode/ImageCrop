@@ -1,8 +1,8 @@
 /*-
  * #%L
- * Template Add-on
+ * Image Crop Add-on
  * %%
- * Copyright (C) 2023 Flowing Code
+ * Copyright (C) 2024 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,9 +17,10 @@
  * limitations under the License.
  * #L%
  */
-package com.flowingcode.vaadin.addons.template;
+package com.flowingcode.vaadin.addons.imagecrop;
 
 import com.flowingcode.vaadin.addons.DemoLayout;
+import com.flowingcode.vaadin.addons.GithubBranch;
 import com.flowingcode.vaadin.addons.GithubLink;
 import com.flowingcode.vaadin.addons.demo.TabbedDemo;
 import com.vaadin.flow.router.ParentLayout;
@@ -27,12 +28,14 @@ import com.vaadin.flow.router.Route;
 
 @SuppressWarnings("serial")
 @ParentLayout(DemoLayout.class)
-@Route("template")
-@GithubLink("https://github.com/FlowingCode/AddonStarter24")
-public class TemplateDemoView extends TabbedDemo {
+@Route("image-crop")
+@GithubBranch("initial-implementation")
+@GithubLink("https://github.com/FlowingCode/ImageCrop")
+public class ImageCropDemoView extends TabbedDemo {
 
-  public TemplateDemoView() {
-    addDemo(TemplateDemo.class);
+  public ImageCropDemoView() {
+    addDemo(BasicImageCropDemo.class);
+    addDemo(UploadImageCropDemo.class);
     setSizeFull();
   }
 }
