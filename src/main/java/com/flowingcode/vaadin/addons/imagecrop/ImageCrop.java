@@ -153,7 +153,7 @@ public class ImageCrop extends ReactAdapterComponent {
    * 
    * @param aspect the aspect ratio of the crop
    */
-  public void setAspect(Double aspect) {
+  public void setAspect(double aspect) {
     setState("aspect", aspect);
   }
 
@@ -162,7 +162,7 @@ public class ImageCrop extends ReactAdapterComponent {
    *
    * @return the aspect ratio
    */
-  public Double getAspect() {
+  public double getAspect() {
     return getState("aspect", Double.class);
   }
 
