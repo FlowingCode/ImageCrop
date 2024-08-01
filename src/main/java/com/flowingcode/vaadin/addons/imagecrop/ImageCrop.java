@@ -344,25 +344,29 @@ public class ImageCrop extends ReactAdapterComponent {
   }
 
   /**
-   * Returns the cropped image data URI as a Base64 encoded byte array. If the image data URI does
-   * not contain "image/*;base64,", it will be decoded to prevent a null pointer exception.
+   * Decodes the cropped image data URI and returns it as a byte array. If the image data URI is not
+   * in the format "data:image/*;base64,", it will be decoded assuming it is a Base64 encoded
+   * string.
    * 
-   * <p>  
-   * This method incorporates work licensed under MIT. 
-   * Copyright 2021-2023 David "F0rce" Dodlek https://github.com/F0rce/cropper
+   * <p>
+   * This method incorporates work licensed under MIT. Copyright 2021-2023 David "F0rce" Dodlek
+   * https://github.com/F0rce/cropper
    * </p>
    * 
-   * @return byte[] the Base64 encoded byte array of the cropped image
+   * @return byte[] the decoded byte array of the cropped image
    */
   public byte[] getCroppedImageBase64() {
     String croppedDataUri = this.getCroppedImageDataUri();
     if (StringUtils.isBlank(croppedDataUri)) {
       return null;
     }
-    String split = croppedDataUri.split(",")[1];
-    return (split.length() == 0)
-        ? Base64.getDecoder().decode(croppedDataUri.getBytes(StandardCharsets.UTF_8))
-        : Base64.getDecoder().decode(split.getBytes(StandardCharsets.UTF_8));
+
+    String base64Data = croppedDataUri;
+    if (croppedDataUri.contains("base64,")) {
+      base64Data = croppedDataUri.split(",")[1];
+    }
+
+    return Base64.getDecoder().decode(base64Data.getBytes(StandardCharsets.UTF_8));
   }
 
 }
