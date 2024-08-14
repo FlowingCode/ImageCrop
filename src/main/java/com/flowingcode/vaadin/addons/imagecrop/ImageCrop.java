@@ -140,8 +140,6 @@ public class ImageCrop extends ReactAdapterComponent {
 
   /**
    * Gets the crop dimensions.
-   * 
-   * @param crop the current crop dimensions
    */
   public Crop getCrop() {
     return getState("crop", Crop.class);
