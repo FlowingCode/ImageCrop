@@ -19,7 +19,7 @@
  */
 
 import { ReactAdapterElement, RenderHooks } from 'Frontend/generated/flow/ReactAdapter';
-import { JSXElementConstructor, ReactElement, useRef } from "react";
+import { JSXElementConstructor, ReactElement, useRef, useEffect } from "react";
 import React from 'react';
 import { type Crop, ReactCrop, PixelCrop, makeAspectCrop, centerCrop } from "react-image-crop";
 
@@ -41,29 +41,81 @@ class ImageCropElement extends ReactAdapterElement {
 		const [maxWidth] = hooks.useState<number>("maxWidth");
 		const [maxHeight] = hooks.useState<number>("maxHeight");
 		const [ruleOfThirds] = hooks.useState<boolean>("ruleOfThirds", false);
+		
+		// Track previous image dimensions to adjust crop proportionally when resizing
+		const prevImgSize = useRef<{ width: number; height: number } | null>(null);
 
+		/**
+		* Handles intial calculations on image load.
+		*/
 		const onImageLoad = () => {
-			if (imgRef.current && crop) {
+			if (imgRef.current) {
 				const { width, height } = imgRef.current;
-				const newcrop = centerCrop(
-					makeAspectCrop(
-						{
-							unit: crop.unit,
-							width: crop.width,
-							height: crop.height,
-							x: crop.x,
-							y: crop.y
-						},
-						aspect,
+				prevImgSize.current = { width, height };
+				if (crop) {
+					const newcrop = centerCrop(
+						makeAspectCrop(
+							{
+								unit: crop.unit,
+								width: crop.width,
+								height: crop.height,
+								x: crop.x,
+								y: crop.y
+							},
+							aspect,
+							width,
+							height
+						),
 						width,
 						height
-					),
-					width,
-					height
-				)
-				setCrop(newcrop);
+					)
+					setCrop(newcrop);
+				}
 			}
 		};
+
+		/**
+		* Adjusts the crop size proportionally when the image is resized.
+		*/
+		const resizeCrop = (newWidth: number, newHeight: number) => {
+			if (!crop || !prevImgSize.current) return;
+			const { width: oldWidth, height: oldHeight } = prevImgSize.current;
+
+			const scaleX = newWidth / oldWidth;
+			const scaleY = newHeight / oldHeight;
+
+			const resizedCrop: Crop = {
+				unit: crop.unit,
+				width: crop.width * scaleX,
+				height: crop.height * scaleY,
+				x: crop.x * scaleX,
+				y: crop.y * scaleY,
+			};
+
+			setCrop(resizedCrop);
+			prevImgSize.current = { width: newWidth, height: newHeight };
+		};
+
+		/**
+		* Observes image resizing and updates crop size dynamically.
+		*/
+		useEffect(() => {
+			if (!imgRef.current) return;
+
+			const resizeObserver = new ResizeObserver(() => {
+				if (imgRef.current && prevImgSize.current) {
+					const { width, height } = imgRef.current;
+					if (width != prevImgSize.current.width &&
+						height != prevImgSize.current.height) {
+						resizeCrop(width, height);
+					}
+				}
+			});
+
+			resizeObserver.observe(imgRef.current);
+
+			return () => resizeObserver.disconnect();
+		}, [crop]);
 
 		const onChange = (c: Crop) => {
 			setCrop(c);
