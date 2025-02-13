@@ -21,7 +21,7 @@
 import { ReactAdapterElement, RenderHooks } from 'Frontend/generated/flow/ReactAdapter';
 import { JSXElementConstructor, ReactElement, useRef } from "react";
 import React from 'react';
-import { type Crop, ReactCrop, PixelCrop, makeAspectCrop, centerCrop } from "react-image-crop";
+import { type Crop, ReactCrop, PixelCrop, PercentCrop, makeAspectCrop, centerCrop } from "react-image-crop";
 
 class ImageCropElement extends ReactAdapterElement {
 
@@ -45,23 +45,19 @@ class ImageCropElement extends ReactAdapterElement {
 		const onImageLoad = () => {
 			if (imgRef.current && crop) {
 				const { width, height } = imgRef.current;
-				const newcrop = centerCrop(
-					makeAspectCrop(
-						{
-							unit: crop.unit,
-							width: crop.width,
-							height: crop.height,
-							x: crop.x,
-							y: crop.y
-						},
-						aspect,
+				if (crop.unit==='px') {
+					setCrop(centerCrop(
+						makeAspectCrop(crop as PixelCrop, aspect, width, height),
 						width,
 						height
-					),
-					width,
-					height
-				)
-				setCrop(newcrop);
+					));
+				} else if (crop.unit==='%') {
+					setCrop(centerCrop(
+						makeAspectCrop(crop as PercentCrop, aspect, width, height),
+						width,
+						height
+					));
+				}
 			}
 		};
 
