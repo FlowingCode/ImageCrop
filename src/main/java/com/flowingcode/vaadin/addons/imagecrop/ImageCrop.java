@@ -2,7 +2,7 @@
  * #%L
  * Image Crop Add-on
  * %%
- * Copyright (C) 2024 Flowing Code
+ * Copyright (C) 2024-2025 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -139,6 +139,7 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   public void setCrop(Crop crop) {
     setState("crop", crop);
+    getElement().executeJs("this._updateCroppedImage(this.crop)");
   }
 
   /**
