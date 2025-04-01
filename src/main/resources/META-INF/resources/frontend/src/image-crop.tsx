@@ -2,7 +2,7 @@
  * #%L
  * Image Crop Add-on
  * %%
- * Copyright (C) 2024 Flowing Code
+ * Copyright (C) 2024-2025 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 import { ReactAdapterElement, RenderHooks } from 'Frontend/generated/flow/ReactAdapter';
 import { JSXElementConstructor, ReactElement, useRef, useEffect } from "react";
 import React from 'react';
-import { type Crop, ReactCrop, PixelCrop, makeAspectCrop, centerCrop } from "react-image-crop";
+import { type Crop, ReactCrop, PixelCrop, PercentCrop, makeAspectCrop, centerCrop, convertToPixelCrop } from "react-image-crop";
 
 class ImageCropElement extends ReactAdapterElement {
 
@@ -70,6 +70,7 @@ class ImageCropElement extends ReactAdapterElement {
 						height
 					)
 					setCrop(newcrop);
+					this._updateCroppedImage(newcrop);
 				}
 			}
 		};
@@ -122,69 +123,9 @@ class ImageCropElement extends ReactAdapterElement {
 		};
 
 		const onComplete = (c: PixelCrop) => {
-			croppedImageEncode(c);
+			this._updateCroppedImage(c);
 		};
-
-		const croppedImageEncode = (completedCrop: PixelCrop) => {
-			if (completedCrop) {
-
-				// get the image element
-				const image = imgRef.current;
-
-				// create a canvas element to draw the cropped image
-				const canvas = document.createElement("canvas");
-
-				// draw the image on the canvas
-				if (image) {
-					const ccrop = completedCrop;
-					const scaleX = image.naturalWidth / image.width;
-					const scaleY = image.naturalHeight / image.height;
-					const ctx = canvas.getContext("2d");
-					const pixelRatio = window.devicePixelRatio;
-					canvas.width = ccrop.width * pixelRatio;
-					canvas.height = ccrop.height * pixelRatio;
-
-					if (ctx) {
-						ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-						ctx.imageSmoothingQuality = "high";
-
-						ctx.save();
-
-						if (circularCrop) {
-							canvas.width = ccrop.width;
-							canvas.height = ccrop.height;
-
-							ctx.beginPath();
-
-							ctx.arc(ccrop.width / 2, ccrop.height / 2, ccrop.height / 2, 0, Math.PI * 2, true);
-							ctx.closePath();
-							ctx.clip();
-						}
-
-						ctx.drawImage(
-							image,
-							ccrop.x * scaleX,
-							ccrop.y * scaleY,
-							ccrop.width * scaleX,
-							ccrop.height * scaleY,
-							0,
-							0,
-							ccrop.width,
-							ccrop.height
-						);
-
-						ctx.restore();
-					}
-
-					// get the cropped image
-					let croppedImageDataUri = canvas.toDataURL("image/png", 1.0);
-
-					// dispatch the event containing cropped image
-					this.fireCroppedImageEvent(croppedImageDataUri);
-				}
-			}
-		}
-
+		
 		return (
 			<ReactCrop
 				crop={crop}
@@ -218,6 +159,61 @@ class ImageCropElement extends ReactAdapterElement {
 				},
 			})
 		);
+	}
+	
+	public _updateCroppedImage(crop: PixelCrop|PercentCrop) {
+			const image = this.querySelector("img");
+			if (crop && image) {
+
+				crop = convertToPixelCrop(crop, image.width, image.height);
+				
+				// create a canvas element to draw the cropped image
+				const canvas = document.createElement("canvas");
+
+				// draw the image on the canvas
+				const ccrop = crop;
+				const scaleX = image.naturalWidth / image.width;
+				const scaleY = image.naturalHeight / image.height;
+				const ctx = canvas.getContext("2d");
+				const pixelRatio = window.devicePixelRatio;
+				canvas.width = ccrop.width * pixelRatio;
+				canvas.height = ccrop.height * pixelRatio;
+
+				if (ctx) {
+					ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
+					ctx.imageSmoothingQuality = "high";
+					ctx.save();
+
+					if (this.circularCrop) {
+						canvas.width = ccrop.width;
+						canvas.height = ccrop.height;
+						ctx.beginPath();
+						ctx.arc(ccrop.width / 2, ccrop.height / 2, ccrop.height / 2, 0, Math.PI * 2, true);
+						ctx.closePath();
+						ctx.clip();
+					}
+
+					ctx.drawImage(
+						image,
+						ccrop.x * scaleX,
+						ccrop.y * scaleY,
+						ccrop.width * scaleX,
+						ccrop.height * scaleY,
+						0,
+						0,
+						ccrop.width,
+						ccrop.height
+					);
+
+					ctx.restore();
+
+					// get the cropped image
+					let croppedImageDataUri = canvas.toDataURL("image/png", 1.0);
+
+					// dispatch the event containing cropped image
+					this.fireCroppedImageEvent(croppedImageDataUri);
+				}
+			}
 	}
 }
 
