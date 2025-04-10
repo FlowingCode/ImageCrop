@@ -152,7 +152,7 @@
         <dependency>
             <groupId>io.github.bonigarcia</groupId>
             <artifactId>webdrivermanager</artifactId>
-            <version>5.1.1</version>
+            <version>5.9.0</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -492,6 +492,102 @@
                                         <exclude>**/DemoView.class</exclude>
                                         <exclude>**/DemoLayout.class</exclude>
                                     </excludes>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+
+        <profile>
+            <id>demo-war</id>
+            <properties>
+                <vaadin.productionMode>true</vaadin.productionMode>
+            </properties>
+            <dependencies>
+                <dependency>
+                    <groupId>com.vaadin</groupId>
+                    <artifactId>vaadin-core</artifactId>
+                    <exclusions>
+                        <exclusion>
+                            <groupId>com.vaadin</groupId>
+                            <artifactId>vaadin-dev</artifactId>
+                        </exclusion>
+                    </exclusions>
+                </dependency>
+                <dependency>
+                    <groupId>com.flowingcode.vaadin.addons.demo</groupId>
+                    <artifactId>commons-demo</artifactId>
+                    <version>${flowingcode.commons.demo.version}</version>
+                </dependency>
+                <dependency>
+                    <groupId>org.slf4j</groupId>
+                    <artifactId>slf4j-simple</artifactId>
+                </dependency>
+            </dependencies>
+            <build>
+                <plugins>
+                    <plugin>
+                       <groupId>org.apache.maven.plugins</groupId>
+                       <artifactId>maven-antrun-plugin</artifactId>
+                       <version>1.7</version>
+                       <executions>
+                          <execution>
+                          <id>copy-demo</id>
+                          <phase>process-sources</phase>
+                          <goals>
+                             <goal>run</goal>
+                          </goals>
+                          <configuration>
+                             <target name="copy-demo">
+                                <copy todir="${project.basedir}/src/main" failonerror="false">
+                                    <fileset dir="${project.basedir}/src/test">
+                                        <include name="**"/>
+                                        <exclude name="**/it/*"/>
+                                        <exclude name="**/test/*"/>
+                                    </fileset>
+                                </copy>
+                                <copy todir="${project.basedir}/src/main/resources" failonerror="false">
+                                    <fileset dir="${project.basedir}/src/test/resources"/>
+                                </copy>
+                                <copy todir="${project.basedir}/src/main/resources/META-INF/resources/frontend" failonerror="false">
+                                    <fileset dir="${project.basedir}/src/main/resources/META-INF/frontend"/>
+                                </copy>
+                                <delete failonerror="false">
+                                    <fileset dir="${project.basedir}/src/main/resources/META-INF/frontend"/>
+                                </delete>
+                             </target>
+                          </configuration>
+                       </execution> 
+                     </executions>
+                    </plugin>
+                    
+                    <plugin>
+                        <groupId>com.vaadin</groupId>
+                        <artifactId>vaadin-maven-plugin</artifactId>
+                        <version>${vaadin.version}</version>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>prepare-frontend</goal>
+                                    <goal>build-frontend</goal>
+                                </goals>
+                                <phase>compile</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-war-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <goals>
+                                    <goal>war</goal>
+                                </goals>
+                                <configuration>
+                                    <failOnMissingWebXml>false</failOnMissingWebXml>
                                 </configuration>
                             </execution>
                         </executions>
