@@ -68,7 +68,10 @@ public class ImageCrop extends ReactAdapterComponent {
    * Constructs an ImageCrop component with the given image.
    *
    * @param image the image to be cropped
+   * @deprecated This constructor only preserves the image URL and {@linkplain #setImageAlt(String)
+   *             alternate text}. Use {@link #ImageCrop(String)} instead.
    */
+  @Deprecated(forRemoval = true, since = "1.2.0")
   public ImageCrop(Image image) {
     this(image.getSrc());
     image.getAlt().ifPresent(a -> this.setImageAlt(a)); 
