@@ -25,6 +25,9 @@ import { type Crop, ReactCrop, PixelCrop, PercentCrop, makeAspectCrop, centerCro
 
 class ImageCropElement extends ReactAdapterElement {
 
+	// Cache detected MIME per source URL to avoid repeated network calls
+	#mimeTypeCache = new Map<string, string | null>();
+
 	protected render(hooks: RenderHooks): ReactElement<any, string | JSXElementConstructor<any>> | null {
 
 		const [crop, setCrop] = hooks.useState<Crop>("crop");
@@ -70,7 +73,7 @@ class ImageCropElement extends ReactAdapterElement {
 						height
 					)
 					setCrop(newcrop);
-					this._updateCroppedImage(newcrop);
+					this._updateCroppedImage(newcrop).catch(console.error);
 				}
 			}
 		};
@@ -123,7 +126,7 @@ class ImageCropElement extends ReactAdapterElement {
 		};
 
 		const onComplete = (c: PixelCrop) => {
-			this._updateCroppedImage(c);
+			this._updateCroppedImage(c).catch(console.error);
 		};
 		
 		return (
@@ -160,11 +163,70 @@ class ImageCropElement extends ReactAdapterElement {
 			})
 		);
 	}
+
+	/**
+	 * Attempts to detect the MIME type of given HTMLImageElement.
+	 *
+	 * Resolution order:
+	 *  1. If the image is a data URL, extracts the MIME type directly.
+	 *  2. Otherwise, sends a HEAD request to the image URL to read
+	 *     the Content-Type header (faster, no body download).
+	 *  3. If the HEAD request does not provide Content-Type, falls back
+	 *     to fetching the full image as a Blob and using `blob.type`.
+	 *
+	 * @param img The HTMLImageElement whose MIME type should be detected.
+	 * @returns A Promise resolving to the MIME type string (e.g. "image/png"),
+	 *          or null if it cannot be determined.
+	 */
+	async #getImageMimeType(img: HTMLImageElement): Promise<string | null> {
+		if (!img.src) {
+			return null;
+		}
+
+		// Return cached result if available
+		const cacheKey = img.src;
+		const cached = this.#mimeTypeCache?.get(cacheKey);
+		if (cached !== undefined){
+			return cached;
+		}
+
+		// Case 1: data URL (e.g., data:image/png;base64,...)
+		if (img.src.startsWith("data:")) {
+			const semiIndex = img.src.indexOf(";");
+			if (semiIndex > 5) {
+				const mimeType = img.src.substring(5, semiIndex);
+				this.#mimeTypeCache?.set(cacheKey, mimeType);
+				return mimeType;
+			}
+			this.#mimeTypeCache?.set(cacheKey, null);
+			return null;
+		}
+
+		try {
+			// Case 2: try a HEAD request (fast, no body)
+			const headRes = await fetch(img.src, { method: "HEAD" });
+			let mimeType = headRes.headers.get("Content-Type");
+			if (mimeType) {
+				this.#mimeTypeCache?.set(cacheKey, mimeType);
+				return mimeType;
+			}
+
+			// Case 3: fallback — fetch full blob
+			const blobRes = await fetch(img.src);
+			const blob = await blobRes.blob();
+			mimeType = blob.type || null;
+			this.#mimeTypeCache?.set(cacheKey, mimeType);
+			return mimeType;
+		} catch (err) {
+			console.error("Error fetching image MIME type:", err);
+			this.#mimeTypeCache?.set(cacheKey, null);
+			return null;
+		}
+	}
 	
-	public _updateCroppedImage(crop: PixelCrop|PercentCrop) {
+	public async _updateCroppedImage(crop: PixelCrop|PercentCrop) {
 			const image = this.querySelector("img");
 			if (crop && image) {
-
 				crop = convertToPixelCrop(crop, image.width, image.height);
 				
 				// create a canvas element to draw the cropped image
@@ -207,8 +269,10 @@ class ImageCropElement extends ReactAdapterElement {
 
 					ctx.restore();
 
+					const imgMimeType = await this.#getImageMimeType(image) || 'image/png';
+
 					// get the cropped image
-					let croppedImageDataUri = canvas.toDataURL("image/png", 1.0);
+					let croppedImageDataUri = canvas.toDataURL(imgMimeType, 1.0);
 
 					// dispatch the event containing cropped image
 					this.fireCroppedImageEvent(croppedImageDataUri);
