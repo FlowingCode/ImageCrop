@@ -23,8 +23,6 @@ package com.flowingcode.vaadin.addons.imagecrop;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 
-import org.apache.commons.lang3.StringUtils;
-
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -377,7 +375,7 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   public byte[] getCroppedImageBase64() {
     String croppedDataUri = this.getCroppedImageDataUri();
-    if (StringUtils.isBlank(croppedDataUri)) {
+    if (isBlank(croppedDataUri)) {
       return null;
     }
 
@@ -387,6 +385,10 @@ public class ImageCrop extends ReactAdapterComponent {
     }
 
     return Base64.getDecoder().decode(base64Data.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static boolean isBlank(String s) {
+    return s == null || s.isBlank();
   }
 
 }
