@@ -4,7 +4,7 @@
 
     <groupId>com.flowingcode.vaadin.addons</groupId>
     <artifactId>image-crop-addon</artifactId>
-    <version>1.2.1</version>
+    <version>1.2.2-SNAPSHOT</version>
     <name>Image Crop Add-on</name>
     <description>Image Crop Add-on for Vaadin Flow</description>
     <url>https://www.flowingcode.com/en/open-source/</url>
@@ -40,7 +40,7 @@
         <url>https://github.com/FlowingCode/ImageCrop</url>
         <connection>scm:git:git://github.com/FlowingCode/ImageCrop.git</connection>
         <developerConnection>scm:git:ssh://git@github.com:/FlowingCode/ImageCrop.git</developerConnection>
-        <tag>1.2.1</tag>
+        <tag>master</tag>
     </scm>
 
     <developers>
