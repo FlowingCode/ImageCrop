@@ -26,6 +26,10 @@ The component allows to crop images and configure the following properties for a
 The cropped image result can be obtain as a URI using `getCroppedImageDataUri` method
 or as a Base64 encoded byte array by using `getCroppedImageBase64` method.
 
+## Supported versions
+
+Supported versions: Vaadin 24-25 (add-on version 1.x)
+
 ## Online demo
 
 [Online demo here](http://addonsv24.flowingcode.com/image-crop)
