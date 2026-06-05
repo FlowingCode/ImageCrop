@@ -161,34 +161,60 @@ class ImageCropElement extends ReactAdapterElement {
 		);
 	}
 	
+	/**
+	 * Draws the selected crop region onto an off-screen canvas and dispatches the
+	 * resulting data URI through a {@code cropped-image} event.
+	 *
+	 * <p>The crop rectangle reported by react-image-crop is expressed in the
+	 * image's <em>displayed</em> (rendered) pixels, which can be smaller or larger
+	 * than the image's intrinsic resolution when the browser scales it to fit the
+	 * layout. The selected region is mapped back to the source's <em>natural</em>
+	 * pixels using {@code scaleX}/{@code scaleY} for both the source rectangle and
+	 * the output canvas, so the cropped image keeps the original resolution of the
+	 * selected area rather than the (smaller or larger) on-screen size (see issue
+	 * #26).</p>
+	 *
+	 * <p>Note: a {@code px} crop is measured in rendered pixels, so the exported
+	 * size is the rendered crop scaled to natural resolution, not necessarily the
+	 * configured pixel value. The output is not multiplied by
+	 * {@code window.devicePixelRatio}, so the original pixels are used verbatim
+	 * instead of being upsampled on high-density displays (see issue #21).</p>
+	 */
 	public _updateCroppedImage(crop: PixelCrop|PercentCrop) {
 			const image = this.querySelector("img");
 			if (crop && image) {
 
 				crop = convertToPixelCrop(crop, image.width, image.height);
-				
+
 				// create a canvas element to draw the cropped image
 				const canvas = document.createElement("canvas");
 
 				// draw the image on the canvas
 				const ccrop = crop;
+
+				// Ratio between the image's natural resolution and its displayed size.
+				// Greater than 1 when the image is scaled down to fit the screen.
 				const scaleX = image.naturalWidth / image.width;
 				const scaleY = image.naturalHeight / image.height;
 				const ctx = canvas.getContext("2d");
-				const pixelRatio = window.devicePixelRatio;
-				canvas.width = ccrop.width * pixelRatio;
-				canvas.height = ccrop.height * pixelRatio;
+
+				// Size the output in the crop region's natural pixels so the cropped
+				// image keeps the source's resolution rather than the on-screen size.
+				const outWidth = Math.round(ccrop.width * scaleX);
+				const outHeight = Math.round(ccrop.height * scaleY);
+
+				// Setting canvas dimensions resets the 2D context, so it must happen
+				// before any drawing/clipping state is configured below.
+				canvas.width = outWidth;
+				canvas.height = outHeight;
 
 				if (ctx) {
-					ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
 					ctx.imageSmoothingQuality = "high";
 					ctx.save();
 
 					if (this.circularCrop) {
-						canvas.width = ccrop.width;
-						canvas.height = ccrop.height;
 						ctx.beginPath();
-						ctx.arc(ccrop.width / 2, ccrop.height / 2, ccrop.height / 2, 0, Math.PI * 2, true);
+						ctx.arc(outWidth / 2, outHeight / 2, outHeight / 2, 0, Math.PI * 2, true);
 						ctx.closePath();
 						ctx.clip();
 					}
@@ -201,8 +227,8 @@ class ImageCropElement extends ReactAdapterElement {
 						ccrop.height * scaleY,
 						0,
 						0,
-						ccrop.width,
-						ccrop.height
+						outWidth,
+						outHeight
 					);
 
 					ctx.restore();
