@@ -3,6 +3,7 @@ package com.flowingcode.vaadin.addons.imagecrop.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -43,6 +44,30 @@ public class ImageCropTest {
     Double expectedAspect = 16.0 / 9.0;
     imageCrop.setAspect(expectedAspect);
     assertEquals(expectedAspect, Double.valueOf(imageCrop.getAspect()));
+  }
+
+  @Test
+  public void testSetAndGetOutputMimeType() {
+    String expectedMimeType = "image/jpeg";
+    imageCrop.setOutputMimeType(expectedMimeType);
+    assertEquals(expectedMimeType, imageCrop.getOutputMimeType());
+  }
+
+  @Test
+  public void testSetAndGetOutputQuality() {
+    double expectedQuality = 0.8;
+    imageCrop.setOutputQuality(expectedQuality);
+    assertEquals(expectedQuality, imageCrop.getOutputQuality(), 0.0);
+  }
+
+  @Test
+  public void testGetOutputMimeTypeDefaultsToNullWhenUnset() {
+    assertNull(imageCrop.getOutputMimeType());
+  }
+
+  @Test
+  public void testGetOutputQualityDefaultsToOneWhenUnset() {
+    assertEquals(1.0, imageCrop.getOutputQuality(), 0.0);
   }
 
   @Test

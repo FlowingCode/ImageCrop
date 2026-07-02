@@ -338,6 +338,65 @@ public class ImageCrop extends ReactAdapterComponent {
   }
 
   /**
+   * Sets the MIME type used to encode the cropped image (for example
+   * {@code "image/jpeg"} or {@code "image/png"}). Supported types are
+   * {@code image/png}, {@code image/jpeg} and {@code image/webp}; any other or
+   * unsupported value falls back to {@code image/png}.
+   *
+   * <p>
+   * When left unset, the output format is auto-detected from the image source (its
+   * data URL MIME type or file extension). Circular crops are always encoded in a
+   * transparency-capable format regardless of this setting.
+   *
+   * @param outputMimeType the MIME type used to encode the cropped image
+   */
+  public void setOutputMimeType(String outputMimeType) {
+    setState("outputMimeType", outputMimeType);
+  }
+
+  /**
+   * Gets the MIME type used to encode the cropped image, or {@code null} if it is
+   * auto-detected from the image source.
+   *
+   * @return the configured output MIME type, or {@code null}
+   */
+  public String getOutputMimeType() {
+    if (getElement().getPropertyRaw("outputMimeType") == null) {
+      return null;
+    }
+    return getState("outputMimeType", String.class);
+  }
+
+  /**
+   * Sets the encoding quality used for lossy output formats such as
+   * {@code image/jpeg} and {@code image/webp}. Ignored for {@code image/png}.
+   * Defaults to {@code 1.0}.
+   *
+   * @param outputQuality a value between 0 and 1
+   * @throws IllegalArgumentException if {@code outputQuality} is {@code NaN} or is
+   *         outside the range {@code [0, 1]}
+   */
+  public void setOutputQuality(double outputQuality) {
+    if (Double.isNaN(outputQuality) || outputQuality < 0 || outputQuality > 1) {
+      throw new IllegalArgumentException(
+          "outputQuality must be between 0 and 1, got: " + outputQuality);
+    }
+    setState("outputQuality", outputQuality);
+  }
+
+  /**
+   * Gets the encoding quality used for lossy output formats.
+   *
+   * @return the output quality, between 0 and 1
+   */
+  public double getOutputQuality() {
+    if (getElement().getPropertyRaw("outputQuality") == null) {
+      return 1.0;
+    }
+    return getState("outputQuality", Double.class);
+  }
+
+  /**
    * Returns the cropped image data URI.
    *
    * @return the cropped image data URI
