@@ -36,6 +36,7 @@ public class ImageCropDemoView extends TabbedDemo {
   public ImageCropDemoView() {
     addDemo(BasicImageCropDemo.class);
     addDemo(UploadImageCropDemo.class);
+    addDemo(OutputFormatImageCropDemo.class);
     setSizeFull();
   }
 }

@@ -22,6 +22,8 @@ The component allows to crop images and configure the following properties for a
 * max width (maximum crop width)
 * max height (maximum crop height)
 * rule of thirds (to show rule of thirds lines in the cropped area)
+* output MIME type (the format used to encode the cropped image: `image/png`, `image/jpeg` or `image/webp`; when unset it is auto-detected from the image source, and circular crops always use a transparency-capable format)
+* output quality (encoding quality between 0 and 1 for lossy formats such as `image/jpeg`)
 
 The cropped image result can be obtain as a URI using `getCroppedImageDataUri` method
 or as a Base64 encoded byte array by using `getCroppedImageBase64` method.

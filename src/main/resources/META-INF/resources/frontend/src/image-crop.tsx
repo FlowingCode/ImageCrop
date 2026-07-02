@@ -23,6 +23,67 @@ import { JSXElementConstructor, ReactElement, useRef, useEffect } from "react";
 import React from 'react';
 import { type Crop, ReactCrop, PixelCrop, PercentCrop, makeAspectCrop, centerCrop, convertToPixelCrop } from "react-image-crop";
 
+// MIME types that HTMLCanvasElement.toDataURL can actually encode across browsers.
+// Anything else silently falls back to image/png, so we never emit it.
+const SUPPORTED_OUTPUT_TYPES = new Set(["image/png", "image/jpeg", "image/webp"]);
+
+/** Normalizes a MIME type: lowercased, parameters stripped (e.g. "image/JPEG; charset=x" -> "image/jpeg"). */
+function normalizeMimeType(mime: string | null | undefined): string | undefined {
+	if (!mime) {
+		return undefined;
+	}
+	const normalized = mime.toLowerCase().split(";")[0].trim();
+	return normalized || undefined;
+}
+
+/**
+ * Zero-network detection of the image MIME type from its source: reads it from a
+ * data URL prefix, or infers it from the file extension of a regular URL.
+ */
+function detectMimeTypeFromSrc(src: string | null | undefined): string | undefined {
+	if (!src) {
+		return undefined;
+	}
+	if (src.startsWith("data:")) {
+		// e.g. "data:image/png;base64,..." or "data:image/svg+xml,..."
+		const sep = src.search(/[;,]/);
+		return sep > 5 ? normalizeMimeType(src.substring(5, sep)) : undefined;
+	}
+	// Strip query/hash, then read the file extension.
+	const path = src.split(/[?#]/)[0];
+	const ext = path.substring(path.lastIndexOf(".") + 1).toLowerCase();
+	switch (ext) {
+		case "png": return "image/png";
+		case "jpg":
+		case "jpeg": return "image/jpeg";
+		case "webp": return "image/webp";
+		default: return undefined;
+	}
+}
+
+/**
+ * Resolves the MIME type used to encode the cropped output.
+ *
+ * Uses the explicitly requested type when given (normalized + validated against
+ * the supported set); otherwise auto-detects it from the image source. Falls
+ * back to "image/png" when the result is empty or unsupported. Circular crops
+ * are forced to a transparency-capable format, since JPEG has no alpha channel
+ * and would render the rounded corners black.
+ */
+function resolveOutputType(requested: string | null | undefined, src: string | null | undefined, circular: boolean): string {
+	let type = normalizeMimeType(requested);
+	if (!type) {
+		type = detectMimeTypeFromSrc(src);
+	}
+	if (!type || !SUPPORTED_OUTPUT_TYPES.has(type)) {
+		type = "image/png";
+	}
+	if (circular && type === "image/jpeg") {
+		type = "image/png";
+	}
+	return type;
+}
+
 class ImageCropElement extends ReactAdapterElement {
 
 	protected render(hooks: RenderHooks): ReactElement<any, string | JSXElementConstructor<any>> | null {
@@ -41,9 +102,14 @@ class ImageCropElement extends ReactAdapterElement {
 		const [maxWidth] = hooks.useState<number>("maxWidth");
 		const [maxHeight] = hooks.useState<number>("maxHeight");
 		const [ruleOfThirds] = hooks.useState<boolean>("ruleOfThirds", false);
-		
+		// Output format settings; also read via this.outputMimeType / this.outputQuality at crop time.
+		const [outputMimeType] = hooks.useState<string>("outputMimeType");
+		const [outputQuality] = hooks.useState<number>("outputQuality", 1.0);
+
 		// Track previous image dimensions to adjust crop proportionally when resizing
 		const prevImgSize = useRef<{ width: number; height: number } | null>(null);
+		// Skip the first run of the output-format effect (initial encoding is handled on image load)
+		const didMountRef = useRef(false);
 
 		/**
 		* Handles intial calculations on image load.
@@ -117,6 +183,21 @@ class ImageCropElement extends ReactAdapterElement {
 
 			return () => resizeObserver.disconnect();
 		}, [crop]);
+
+		/**
+		* Re-encodes the current crop on the client when the output format or quality
+		* changes, so the result stays in sync without relying on server-side
+		* state/JS ordering. Skips the initial mount (handled by onImageLoad).
+		*/
+		useEffect(() => {
+			if (!didMountRef.current) {
+				didMountRef.current = true;
+				return;
+			}
+			if (crop) {
+				this._updateCroppedImage(crop);
+			}
+		}, [outputMimeType, outputQuality]);
 
 		const onChange = (c: Crop) => {
 			setCrop(c);
@@ -233,8 +314,9 @@ class ImageCropElement extends ReactAdapterElement {
 
 					ctx.restore();
 
-					// get the cropped image
-					let croppedImageDataUri = canvas.toDataURL("image/png", 1.0);
+					// encode the cropped image using the resolved output format
+					const outputType = resolveOutputType(this.outputMimeType, image.src, this.circularCrop);
+					let croppedImageDataUri = canvas.toDataURL(outputType, this.outputQuality ?? 1.0);
 
 					// dispatch the event containing cropped image
 					this.fireCroppedImageEvent(croppedImageDataUri);
