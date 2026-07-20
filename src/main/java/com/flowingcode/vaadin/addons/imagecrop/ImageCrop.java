@@ -135,7 +135,15 @@ public class ImageCrop extends ReactAdapterComponent {
 
   /**
    * Defines the crop dimensions.
-   * 
+   *
+   * <p>
+   * A {@code %} crop is resolution-independent and is recommended for
+   * programmatic use. A {@code px} crop is interpreted in the image's
+   * <em>source</em> (natural) pixels, so the cropped output has a deterministic
+   * size regardless of how the image is scaled on screen (see issue #33). Note
+   * that this differs from {@link #setCropMinWidth(Integer) the min/max crop
+   * constraints}, which are expressed in rendered (on-screen) pixels.
+   *
    * @param crop the crop dimensions
    */
   public void setCrop(Crop crop) {
@@ -247,8 +255,13 @@ public class ImageCrop extends ReactAdapterComponent {
   }
 
   /**
-   * Sets a minimum crop width, in pixels.
-   * 
+   * Sets a minimum crop width, in rendered (on-screen) pixels.
+   *
+   * <p>
+   * This constraint is applied by react-image-crop in the image's displayed
+   * pixels, unlike a {@code px} {@link #setCrop(Crop) crop}, which is expressed in
+   * source (natural) pixels.
+   *
    * @param minWidth the minimum crop width
    */
   public void setCropMinWidth(Integer minWidth) {

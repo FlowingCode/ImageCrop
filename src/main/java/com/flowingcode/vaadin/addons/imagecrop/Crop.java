@@ -26,8 +26,9 @@ package com.flowingcode.vaadin.addons.imagecrop;
  * The crop dimensions are defined by the unit, x and y coordinates, width, and
  * height.
  *
- * @param unit   the unit of the crop dimensions, can be 'px' (pixels) or '%'
- *               (percentage).
+ * @param unit   the unit of the crop dimensions, can be 'px' or '%'. A '%' crop
+ *               is resolution-independent; a 'px' crop is interpreted in the
+ *               image's source (natural) pixels (see issue #33).
  * @param x      the x-coordinate of the cropped area.
  * @param y      the y-coordinate of the cropped area.
  * @param width  the width of the cropped area

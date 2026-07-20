@@ -106,82 +106,75 @@ class ImageCropElement extends ReactAdapterElement {
 		const [outputMimeType] = hooks.useState<string>("outputMimeType");
 		const [outputQuality] = hooks.useState<number>("outputQuality", 1.0);
 
-		// Track previous image dimensions to adjust crop proportionally when resizing
-		const prevImgSize = useRef<{ width: number; height: number } | null>(null);
 		// Skip the first run of the output-format effect (initial encoding is handled on image load)
 		const didMountRef = useRef(false);
 
 		/**
-		* Handles intial calculations on image load.
+		* Converts a value expressed in source (natural) pixels to a percentage of
+		* the given dimension.
+		*/
+		const toPercent = (value: number, dimension: number) =>
+			dimension ? (value / dimension) * 100 : 0;
+
+		/**
+		* Normalizes the configured crop when the image loads. The crop is kept as a
+		* percentage of the image's natural size, so both the on-screen selection and
+		* the exported image are independent of how the browser scales the image on
+		* screen. A configured "px" crop is interpreted as source (natural) pixels,
+		* which makes the exported size deterministic (see issue #33).
 		*/
 		const onImageLoad = () => {
-			if (imgRef.current) {
-				const { width, height } = imgRef.current;
-				prevImgSize.current = { width, height };
-				if (crop) {
-					const newcrop = centerCrop(
-						makeAspectCrop(
-							{
-								unit: crop.unit,
-								width: crop.width,
-								height: crop.height,
-								x: crop.x,
-								y: crop.y
-							},
-							aspect,
-							width,
-							height
-						),
-						width,
-						height
-					)
-					setCrop(newcrop);
-					this._updateCroppedImage(newcrop);
-				}
+			const img = imgRef.current;
+			if (!img || !crop) {
+				return;
 			}
+			const { naturalWidth, naturalHeight } = img;
+
+			// Work in "%": a "px" crop is treated as source pixels and converted.
+			let normalized: PercentCrop = crop.unit === "%"
+				? { unit: "%", x: crop.x, y: crop.y, width: crop.width, height: crop.height }
+				: {
+					unit: "%",
+					x: toPercent(crop.x, naturalWidth),
+					y: toPercent(crop.y, naturalHeight),
+					width: toPercent(crop.width, naturalWidth),
+					height: toPercent(crop.height, naturalHeight),
+				};
+
+			// Enforce the aspect ratio when configured, then center the selection.
+			if (aspect) {
+				normalized = makeAspectCrop(
+					{ unit: "%", width: normalized.width, x: normalized.x, y: normalized.y },
+					aspect,
+					naturalWidth,
+					naturalHeight
+				);
+			}
+			normalized = centerCrop(normalized, naturalWidth, naturalHeight);
+
+			setCrop(normalized);
+			this._updateCroppedImage(normalized);
 		};
 
 		/**
-		* Adjusts the crop size proportionally when the image is resized.
-		*/
-		const resizeCrop = (newWidth: number, newHeight: number) => {
-			if (!crop || !prevImgSize.current) return;
-			const { width: oldWidth, height: oldHeight } = prevImgSize.current;
-
-			const scaleX = newWidth / oldWidth;
-			const scaleY = newHeight / oldHeight;
-
-			const resizedCrop: Crop = {
-				unit: crop.unit,
-				width: crop.width * scaleX,
-				height: crop.height * scaleY,
-				x: crop.x * scaleX,
-				y: crop.y * scaleY,
-			};
-
-			setCrop(resizedCrop);
-			prevImgSize.current = { width: newWidth, height: newHeight };
-		};
-
-		/**
-		* Observes image resizing and updates crop size dynamically.
+		* Normalizes a programmatic "px" crop that the server sets after the image
+		* has loaded. onImageLoad only runs on the initial load, so without this a
+		* later setCrop("px", ...) would be rendered by ReactCrop as on-screen pixels
+		* and the selection box would diverge from the natural-pixel export (issue
+		* #33). The configured x/y are preserved (no centering) since the crop is
+		* explicitly positioned.
 		*/
 		useEffect(() => {
-			if (!imgRef.current) return;
-
-			const resizeObserver = new ResizeObserver(() => {
-				if (imgRef.current && prevImgSize.current) {
-					const { width, height } = imgRef.current;
-					if (width != prevImgSize.current.width &&
-						height != prevImgSize.current.height) {
-						resizeCrop(width, height);
-					}
-				}
-			});
-
-			resizeObserver.observe(imgRef.current);
-
-			return () => resizeObserver.disconnect();
+			const img = imgRef.current;
+			if (crop && crop.unit !== "%" && img && img.naturalWidth) {
+				setCrop({
+					unit: "%",
+					x: toPercent(crop.x, img.naturalWidth),
+					y: toPercent(crop.y, img.naturalHeight),
+					width: toPercent(crop.width, img.naturalWidth),
+					height: toPercent(crop.height, img.naturalHeight),
+				});
+			}
 		}, [crop]);
 
 		/**
@@ -199,19 +192,22 @@ class ImageCropElement extends ReactAdapterElement {
 			}
 		}, [outputMimeType, outputQuality]);
 
-		const onChange = (c: Crop) => {
-			setCrop(c);
+		// Keep the crop state in "%" so it stays valid regardless of the image's
+		// on-screen size; that scale-invariance is why no ResizeObserver is needed
+		// to rescale it on layout changes (see issue #33).
+		const onChange = (_pixelCrop: PixelCrop, percentCrop: PercentCrop) => {
+			setCrop(percentCrop);
 		};
 
-		const onComplete = (c: PixelCrop) => {
-			this._updateCroppedImage(c);
+		const onComplete = (_pixelCrop: PixelCrop, percentCrop: PercentCrop) => {
+			this._updateCroppedImage(percentCrop);
 		};
 		
 		return (
 			<ReactCrop
 				crop={crop}
-				onChange={(c: Crop) => onChange(c)}
-				onComplete={(c: PixelCrop) => onComplete(c)}
+				onChange={(c: PixelCrop, pc: PercentCrop) => onChange(c, pc)}
+				onComplete={(c: PixelCrop, pc: PercentCrop) => onComplete(c, pc)}
 				circularCrop={circularCrop}
 				aspect={aspect}
 				keepSelection={keepSelection}
@@ -246,43 +242,34 @@ class ImageCropElement extends ReactAdapterElement {
 	 * Draws the selected crop region onto an off-screen canvas and dispatches the
 	 * resulting data URI through a {@code cropped-image} event.
 	 *
-	 * <p>The crop rectangle reported by react-image-crop is expressed in the
-	 * image's <em>displayed</em> (rendered) pixels, which can be smaller or larger
-	 * than the image's intrinsic resolution when the browser scales it to fit the
-	 * layout. The selected region is mapped back to the source's <em>natural</em>
-	 * pixels using {@code scaleX}/{@code scaleY} for both the source rectangle and
-	 * the output canvas, so the cropped image keeps the original resolution of the
-	 * selected area rather than the (smaller or larger) on-screen size (see issue
-	 * #26).</p>
+	 * <p>The crop is mapped to the image's <em>natural</em> (intrinsic) pixels:
+	 * {@code convertToPixelCrop} scales a {@code %} crop against
+	 * {@code naturalWidth}/{@code naturalHeight}, while a {@code px} crop is taken
+	 * as source (natural) pixels directly. Because the mapping never depends on the
+	 * image's on-screen size, the exported dimensions are deterministic regardless
+	 * of how the browser scaled the image when the crop was set (see issues #26 and
+	 * #33).</p>
 	 *
-	 * <p>Note: a {@code px} crop is measured in rendered pixels, so the exported
-	 * size is the rendered crop scaled to natural resolution, not necessarily the
-	 * configured pixel value. The output is not multiplied by
-	 * {@code window.devicePixelRatio}, so the original pixels are used verbatim
-	 * instead of being upsampled on high-density displays (see issue #21).</p>
+	 * <p>Note: the output is not multiplied by {@code window.devicePixelRatio}, so
+	 * the original pixels are used verbatim instead of being upsampled on
+	 * high-density displays (see issue #21).</p>
 	 */
 	public _updateCroppedImage(crop: PixelCrop|PercentCrop) {
 			const image = this.querySelector("img");
 			if (crop && image) {
 
-				crop = convertToPixelCrop(crop, image.width, image.height);
+				// Map the crop to the image's natural pixels. A "%" crop scales to the
+				// natural resolution; a "px" crop is interpreted as source pixels.
+				const ccrop = convertToPixelCrop(crop, image.naturalWidth, image.naturalHeight);
 
 				// create a canvas element to draw the cropped image
 				const canvas = document.createElement("canvas");
-
-				// draw the image on the canvas
-				const ccrop = crop;
-
-				// Ratio between the image's natural resolution and its displayed size.
-				// Greater than 1 when the image is scaled down to fit the screen.
-				const scaleX = image.naturalWidth / image.width;
-				const scaleY = image.naturalHeight / image.height;
 				const ctx = canvas.getContext("2d");
 
-				// Size the output in the crop region's natural pixels so the cropped
+				// The output is sized in the crop region's natural pixels, so the cropped
 				// image keeps the source's resolution rather than the on-screen size.
-				const outWidth = Math.round(ccrop.width * scaleX);
-				const outHeight = Math.round(ccrop.height * scaleY);
+				const outWidth = Math.round(ccrop.width);
+				const outHeight = Math.round(ccrop.height);
 
 				// Setting canvas dimensions resets the 2D context, so it must happen
 				// before any drawing/clipping state is configured below.
@@ -302,10 +289,10 @@ class ImageCropElement extends ReactAdapterElement {
 
 					ctx.drawImage(
 						image,
-						ccrop.x * scaleX,
-						ccrop.y * scaleY,
-						ccrop.width * scaleX,
-						ccrop.height * scaleY,
+						ccrop.x,
+						ccrop.y,
+						ccrop.width,
+						ccrop.height,
 						0,
 						0,
 						outWidth,
