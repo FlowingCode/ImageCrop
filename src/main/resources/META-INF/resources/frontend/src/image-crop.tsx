@@ -271,6 +271,16 @@ class ImageCropElement extends ReactAdapterElement {
 				const outWidth = Math.round(ccrop.width);
 				const outHeight = Math.round(ccrop.height);
 
+				// Nothing to export: the image has no intrinsic size (naturalWidth /
+				// naturalHeight are still 0 before it loads, and stay 0 for a source
+				// without an intrinsic size, which collapses any crop to zero) or the
+				// selection itself is empty. Bail out instead of drawing a 0x0 canvas
+				// and firing an event with a blank "data:," URI.
+				if (!Number.isFinite(outWidth) || !Number.isFinite(outHeight)
+					|| outWidth <= 0 || outHeight <= 0) {
+					return;
+				}
+
 				// Setting canvas dimensions resets the 2D context, so it must happen
 				// before any drawing/clipping state is configured below.
 				canvas.width = outWidth;
