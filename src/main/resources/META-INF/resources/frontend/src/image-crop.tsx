@@ -128,6 +128,23 @@ class ImageCropElement extends ReactAdapterElement {
 		};
 
 		/**
+		* Enforces the configured aspect ratio on a "%" crop by deriving its height
+		* from its width, leaving the position untouched.
+		*
+		* No-op when no aspect is configured: makeAspectCrop divides the width by the
+		* aspect, so passing an undefined one collapses the crop to zero.
+		*/
+		const applyAspect = (percentCrop: PercentCrop, img: HTMLImageElement): PercentCrop =>
+			aspect
+				? makeAspectCrop(
+					{ unit: "%", width: percentCrop.width, x: percentCrop.x, y: percentCrop.y },
+					aspect,
+					img.naturalWidth,
+					img.naturalHeight
+				)
+				: percentCrop;
+
+		/**
 		* Normalizes the configured crop when the image loads. The crop is kept as a
 		* percentage of the image's natural size, so both the on-screen selection and
 		* the exported image are independent of how the browser scales the image on
@@ -144,18 +161,9 @@ class ImageCropElement extends ReactAdapterElement {
 			if (!normalized) {
 				return;
 			}
-			const { naturalWidth, naturalHeight } = img;
-
 			// Enforce the aspect ratio when configured, then center the selection.
-			if (aspect) {
-				normalized = makeAspectCrop(
-					{ unit: "%", width: normalized.width, x: normalized.x, y: normalized.y },
-					aspect,
-					naturalWidth,
-					naturalHeight
-				);
-			}
-			normalized = centerCrop(normalized, naturalWidth, naturalHeight);
+			normalized = applyAspect(normalized, img);
+			normalized = centerCrop(normalized, img.naturalWidth, img.naturalHeight);
 
 			setCrop(normalized);
 			this._updateCroppedImage(normalized);
@@ -167,7 +175,9 @@ class ImageCropElement extends ReactAdapterElement {
 		* later setCrop("px", ...) would be rendered by ReactCrop as on-screen pixels
 		* and the selection box would diverge from the natural-pixel export (issue
 		* #33). The configured x/y are preserved (no centering) since the crop is
-		* explicitly positioned.
+		* explicitly positioned, but the aspect ratio is enforced just as it is on
+		* load, so a crop that does not match the configured aspect is corrected
+		* instead of staying off-ratio until the user drags a handle.
 		*/
 		useEffect(() => {
 			const img = imgRef.current;
@@ -176,7 +186,7 @@ class ImageCropElement extends ReactAdapterElement {
 			}
 			const normalized = toPercentCrop(crop, img);
 			if (normalized) {
-				setCrop(normalized);
+				setCrop(applyAspect(normalized, img));
 			}
 		}, [crop]);
 
