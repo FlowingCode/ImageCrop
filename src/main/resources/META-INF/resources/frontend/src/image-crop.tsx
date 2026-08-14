@@ -21,7 +21,7 @@
 import { ReactAdapterElement, RenderHooks } from 'Frontend/generated/flow/ReactAdapter';
 import { JSXElementConstructor, ReactElement, useRef, useEffect } from "react";
 import React from 'react';
-import { type Crop, ReactCrop, PixelCrop, PercentCrop, makeAspectCrop, centerCrop, convertToPixelCrop } from "react-image-crop";
+import { type Crop, ReactCrop, PixelCrop, PercentCrop, makeAspectCrop, centerCrop, convertToPixelCrop, convertToPercentCrop } from "react-image-crop";
 
 // MIME types that HTMLCanvasElement.toDataURL can actually encode across browsers.
 // Anything else silently falls back to image/png, so we never emit it.
@@ -110,11 +110,22 @@ class ImageCropElement extends ReactAdapterElement {
 		const didMountRef = useRef(false);
 
 		/**
-		* Converts a value expressed in source (natural) pixels to a percentage of
-		* the given dimension.
+		* Normalizes a configured crop to a "%" crop of the image's natural size: a
+		* "px" crop is interpreted as source (natural) pixels, while a "%" crop is
+		* already resolution-independent and is returned unchanged.
+		*
+		* Returns null while the image has no intrinsic size (naturalWidth /
+		* naturalHeight are 0 before it loads, and stay 0 for a source without an
+		* intrinsic size), since every conversion against a zero dimension is
+		* meaningless.
 		*/
-		const toPercent = (value: number, dimension: number) =>
-			dimension ? (value / dimension) * 100 : 0;
+		const toPercentCrop = (configured: Crop, img: HTMLImageElement): PercentCrop | null => {
+			const { naturalWidth, naturalHeight } = img;
+			if (!naturalWidth || !naturalHeight) {
+				return null;
+			}
+			return convertToPercentCrop(configured, naturalWidth, naturalHeight);
+		};
 
 		/**
 		* Normalizes the configured crop when the image loads. The crop is kept as a
@@ -128,18 +139,12 @@ class ImageCropElement extends ReactAdapterElement {
 			if (!img || !crop) {
 				return;
 			}
-			const { naturalWidth, naturalHeight } = img;
-
 			// Work in "%": a "px" crop is treated as source pixels and converted.
-			let normalized: PercentCrop = crop.unit === "%"
-				? { unit: "%", x: crop.x, y: crop.y, width: crop.width, height: crop.height }
-				: {
-					unit: "%",
-					x: toPercent(crop.x, naturalWidth),
-					y: toPercent(crop.y, naturalHeight),
-					width: toPercent(crop.width, naturalWidth),
-					height: toPercent(crop.height, naturalHeight),
-				};
+			let normalized = toPercentCrop(crop, img);
+			if (!normalized) {
+				return;
+			}
+			const { naturalWidth, naturalHeight } = img;
 
 			// Enforce the aspect ratio when configured, then center the selection.
 			if (aspect) {
@@ -166,14 +171,12 @@ class ImageCropElement extends ReactAdapterElement {
 		*/
 		useEffect(() => {
 			const img = imgRef.current;
-			if (crop && crop.unit !== "%" && img && img.naturalWidth) {
-				setCrop({
-					unit: "%",
-					x: toPercent(crop.x, img.naturalWidth),
-					y: toPercent(crop.y, img.naturalHeight),
-					width: toPercent(crop.width, img.naturalWidth),
-					height: toPercent(crop.height, img.naturalHeight),
-				});
+			if (!crop || crop.unit === "%" || !img) {
+				return;
+			}
+			const normalized = toPercentCrop(crop, img);
+			if (normalized) {
+				setCrop(normalized);
 			}
 		}, [crop]);
 
