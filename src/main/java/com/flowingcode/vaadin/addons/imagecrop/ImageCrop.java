@@ -135,7 +135,22 @@ public class ImageCrop extends ReactAdapterComponent {
 
   /**
    * Defines the crop dimensions.
-   * 
+   *
+   * <p>
+   * A {@code %} crop is resolution-independent and is recommended for
+   * programmatic use. A {@code px} crop is interpreted in the image's
+   * <em>source</em> (natural) pixels, so the cropped output has a deterministic
+   * size regardless of how the image is scaled on screen (see issue #33). Note
+   * that this differs from {@link #setCropMinWidth(Integer) the min/max crop
+   * constraints}, which are expressed in rendered (on-screen) pixels.
+   *
+   * <p>
+   * A {@code %} crop is measured against the image's natural size when the output
+   * is generated, but against its rendered box when the selection is drawn. Both
+   * agree as long as the rendered image keeps the source's aspect ratio; forcing
+   * both a width and a height on the image (or an {@code object-fit} that crops or
+   * stretches it) makes the on-screen selection diverge from the exported region.
+   *
    * @param crop the crop dimensions
    */
   public void setCrop(Crop crop) {
@@ -145,6 +160,15 @@ public class ImageCrop extends ReactAdapterComponent {
 
   /**
    * Gets the crop dimensions.
+   *
+   * <p>
+   * Once the image has loaded, the crop is normalized to a percentage of the
+   * image's natural size, so the returned unit is {@code %} even when
+   * {@link #setCrop(Crop)} was given a {@code px} crop. Because {@link Crop} holds
+   * integer values, those percentages are rounded to whole units, which on a large
+   * image is coarser than the configured pixel values.
+   *
+   * @return the crop dimensions
    */
   public Crop getCrop() {
     return getState("crop", Crop.class);
@@ -247,8 +271,13 @@ public class ImageCrop extends ReactAdapterComponent {
   }
 
   /**
-   * Sets a minimum crop width, in pixels.
-   * 
+   * Sets a minimum crop width, in rendered (on-screen) pixels.
+   *
+   * <p>
+   * This constraint is applied by react-image-crop in the image's displayed
+   * pixels, unlike a {@code px} {@link #setCrop(Crop) crop}, which is expressed in
+   * source (natural) pixels.
+   *
    * @param minWidth the minimum crop width
    */
   public void setCropMinWidth(Integer minWidth) {
