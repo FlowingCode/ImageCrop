@@ -145,6 +145,12 @@ public class ImageCrop extends ReactAdapterComponent {
    * constraints}, which are expressed in rendered (on-screen) pixels.
    *
    * <p>
+   * The configured {@code x}/{@code y} are only honored when the crop is set
+   * after the image has loaded. On the initial load the selection is centered on
+   * the image and its configured position is discarded; its size and the
+   * configured {@link #setAspect(double) aspect ratio} are honored in both cases.
+   *
+   * <p>
    * A {@code %} crop is measured against the image's natural size when the output
    * is generated, but against its rendered box when the selection is drawn. Both
    * agree as long as the rendered image keeps the source's aspect ratio; forcing

@@ -150,6 +150,10 @@ class ImageCropElement extends ReactAdapterElement {
 		* the exported image are independent of how the browser scales the image on
 		* screen. A configured "px" crop is interpreted as source (natural) pixels,
 		* which makes the exported size deterministic (see issue #33).
+		*
+		* The selection is centered on the image, so the configured x/y are discarded
+		* on this path; a crop set after the load keeps its position (see the effect
+		* below). setCrop's Javadoc documents the difference.
 		*/
 		const onImageLoad = () => {
 			const img = imgRef.current;
