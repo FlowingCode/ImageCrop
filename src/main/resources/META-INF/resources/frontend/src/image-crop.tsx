@@ -271,6 +271,16 @@ class ImageCropElement extends ReactAdapterElement {
 			const image = this.querySelector("img");
 			if (crop && image) {
 
+				// Nothing to export while the image has no intrinsic size (naturalWidth /
+				// naturalHeight are 0 before it loads, and stay 0 for a source without an
+				// intrinsic size). Checked here rather than on the converted crop because
+				// convertToPixelCrop returns a "px" crop unchanged: it would keep the
+				// configured size, pass the check below and draw a not-yet-loaded image,
+				// firing a fully transparent image through "cropped-image".
+				if (!image.naturalWidth || !image.naturalHeight) {
+					return;
+				}
+
 				// Map the crop to the image's natural pixels. A "%" crop scales to the
 				// natural resolution; a "px" crop is interpreted as source pixels.
 				const ccrop = convertToPixelCrop(crop, image.naturalWidth, image.naturalHeight);
@@ -284,11 +294,8 @@ class ImageCropElement extends ReactAdapterElement {
 				const outWidth = Math.round(ccrop.width);
 				const outHeight = Math.round(ccrop.height);
 
-				// Nothing to export: the image has no intrinsic size (naturalWidth /
-				// naturalHeight are still 0 before it loads, and stay 0 for a source
-				// without an intrinsic size, which collapses any crop to zero) or the
-				// selection itself is empty. Bail out instead of drawing a 0x0 canvas
-				// and firing an event with a blank "data:," URI.
+				// The selection maps to an empty region: bail out instead of drawing a
+				// 0x0 canvas and firing an event with a blank "data:," URI.
 				if (!Number.isFinite(outWidth) || !Number.isFinite(outHeight)
 					|| outWidth <= 0 || outHeight <= 0) {
 					return;
