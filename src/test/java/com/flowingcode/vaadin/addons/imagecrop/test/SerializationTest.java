@@ -29,7 +29,6 @@ import org.junit.Test;
 
 import com.flowingcode.vaadin.addons.imagecrop.ImageCrop;
 import com.vaadin.flow.component.UI;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
 
@@ -49,7 +48,7 @@ public class SerializationTest {
   @Test
   public void testSerialization() throws ClassNotFoundException, IOException {
     try {
-      testSerializationOf(new ImageCrop(new Image()));
+      testSerializationOf(new ImageCrop(""));
     } catch (Exception e) {
       Assert.fail("Problem while testing serialization: " + e.getMessage());
     }

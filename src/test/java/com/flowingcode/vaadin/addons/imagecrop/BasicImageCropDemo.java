@@ -40,15 +40,13 @@ public class BasicImageCropDemo extends VerticalLayout {
   public BasicImageCropDemo() {
     add(new Span("Select a portion of the picture to crop: "));
 
-    Image image = new Image("images/empty-plant.png", "image to crop");
-    ImageCrop imageCrop = new ImageCrop(image);
+    ImageCrop imageCrop = new ImageCrop("images/empty-plant.png");
+    imageCrop.setImageAlt("image to crop");
     add(imageCrop);
 
     Button getCropButton = new Button("Get Cropped Image");
 
     croppedResultDiv.setId("result-cropped-image-div");
-    croppedResultDiv.setWidth(image.getWidth());
-    croppedResultDiv.setHeight(image.getHeight());
 
     getCropButton.addClickListener(e -> {
       croppedResultDiv.removeAll();

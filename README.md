@@ -114,8 +114,8 @@ Image Crop Add-on is written by Flowing Code S.A.
 * Basic use
 
 ```java
-Image image = new Image("images/empty-plant.png", "image to crop");  
-ImageCrop imageCrop = new ImageCrop(image);
+ImageCrop imageCrop = new ImageCrop("images/empty-plant.png");
+imageCrop.setImageAlt("image to crop");
 add(imageCrop);
 ```
 

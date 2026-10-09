@@ -30,7 +30,6 @@ import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.react.ReactAdapterComponent;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.shared.Registration;
@@ -78,19 +77,6 @@ public class ImageCrop extends ReactAdapterComponent {
   public ImageCrop(DownloadHandler downloadHandler) {
     this.setImageSrc(downloadHandler);
     this.addCroppedImageListener(this::updateCroppedImage);
-  }
-
-  /**
-   * Constructs an ImageCrop component with the given image.
-   *
-   * @param image the image to be cropped
-   * @deprecated This constructor only preserves the image URL and {@linkplain #setImageAlt(String)
-   *             alternate text}. Use {@link #ImageCrop(String)} instead.
-   */
-  @Deprecated(forRemoval = true, since = "1.2.0")
-  public ImageCrop(Image image) {
-    this(image.getSrc());
-    image.getAlt().ifPresent(a -> this.setImageAlt(a)); 
   }
 
   /**
