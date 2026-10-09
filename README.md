@@ -30,7 +30,9 @@ or as a Base64 encoded byte array by using `getCroppedImageBase64` method.
 
 ## Supported versions
 
-Supported versions: Vaadin 24-25 (add-on version 1.x)
+Supported versions:
+- Vaadin 24.8+ and 25: add-on version 2.x
+- Vaadin 24 and 25: add-on version 1.x (without `DownloadHandler` support)
 
 ## Online demo
 
