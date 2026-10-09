@@ -119,6 +119,14 @@ ImageCrop imageCrop = new ImageCrop(image);
 add(imageCrop);
 ```
 
+* Image served by a `DownloadHandler`
+
+```java
+ImageCrop imageCrop = new ImageCrop(DownloadHandler.forClassResource(getClass(),
+    "/META-INF/resources/images/empty-plant.png", "empty-plant.png").inline());
+add(imageCrop);
+```
+
 * Get cropped image 
 
 ```java

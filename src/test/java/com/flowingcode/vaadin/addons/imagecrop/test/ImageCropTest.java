@@ -3,25 +3,36 @@ package com.flowingcode.vaadin.addons.imagecrop.test;
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNull;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import java.io.ByteArrayInputStream;
 import java.util.Base64;
 
+import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.flowingcode.vaadin.addons.imagecrop.Crop;
 import com.flowingcode.vaadin.addons.imagecrop.CroppedImageEvent;
 import com.flowingcode.vaadin.addons.imagecrop.ImageCrop;
+import com.vaadin.flow.component.UI;
+import com.vaadin.flow.server.streams.DownloadHandler;
+import com.vaadin.flow.server.streams.DownloadResponse;
 
 public class ImageCropTest {
 
   private ImageCrop imageCrop;
 
+  // keeps the current UI strongly reachable during the test
+  private UI ui;
+
   @Before
   public void setUp() {
+    ui = new UI();
+    UI.setCurrent(ui);
     imageCrop = new ImageCrop("dummyImageSrc");
   }
 
@@ -30,6 +41,45 @@ public class ImageCropTest {
     String expectedSrc = "newImageSrc";
     imageCrop.setImageSrc(expectedSrc);
     assertEquals(expectedSrc, imageCrop.getImageSrc());
+  }
+
+  @Test
+  public void testSetImageSrcWithDownloadHandler() {
+    imageCrop.setImageSrc(imageHandler());
+    assertNotNull(imageCrop.getImageSrc());
+    assertEquals(imageCrop.getImageSrc(), imageCrop.getElement().getAttribute("img-src"));
+  }
+
+  @Test
+  public void testSetImageSrcWithStringReleasesDownloadHandler() {
+    imageCrop.setImageSrc(imageHandler());
+    imageCrop.setImageSrc("newImageSrc");
+    assertEquals("newImageSrc", imageCrop.getImageSrc());
+    assertFalse(imageCrop.getElement().hasAttribute("img-src"));
+  }
+
+  @Test
+  public void testSetImageSrcWithDownloadHandlerResetsCroppedImage() {
+    imageCrop.setImageSrc(imageHandler());
+    assertNull(imageCrop.getCroppedImageDataUri());
+  }
+
+  @Test
+  public void testDownloadHandlerConstructorHasNoCroppedImage() {
+    imageCrop = new ImageCrop(imageHandler());
+    assertNotNull(imageCrop.getImageSrc());
+    assertNull(imageCrop.getCroppedImageDataUri());
+    assertNull(imageCrop.getCroppedImageBase64());
+  }
+
+  @After
+  public void tearDown() {
+    UI.setCurrent(null);
+  }
+
+  private static DownloadHandler imageHandler() {
+    return DownloadHandler.fromInputStream(event -> new DownloadResponse(
+        new ByteArrayInputStream(new byte[0]), "image.png", "image/png", 0)).inline();
   }
 
   @Test

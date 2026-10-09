@@ -28,7 +28,10 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.flowingcode.vaadin.addons.imagecrop.ImageCrop;
+import com.vaadin.flow.component.UI;
 import com.vaadin.flow.component.html.Image;
+import com.vaadin.flow.server.streams.DownloadHandler;
+import com.vaadin.flow.server.streams.DownloadResponse;
 
 public class SerializationTest {
 
@@ -49,6 +52,22 @@ public class SerializationTest {
       testSerializationOf(new ImageCrop(new Image()));
     } catch (Exception e) {
       Assert.fail("Problem while testing serialization: " + e.getMessage());
+    }
+  }
+
+  @Test
+  public void testSerializationWithDownloadHandler() throws ClassNotFoundException, IOException {
+    UI ui = new UI();
+    UI.setCurrent(ui);
+    try {
+      byte[] content = new byte[0];
+      // unattached, so the pending resource registration is serialized too
+      testSerializationOf(new ImageCrop(DownloadHandler.fromInputStream(event -> new DownloadResponse(
+          new ByteArrayInputStream(content), "image.png", "image/png", content.length)).inline()));
+    } catch (Exception e) {
+      Assert.fail("Problem while testing serialization: " + e.getMessage());
+    } finally {
+      UI.setCurrent(null);
     }
   }
 }
