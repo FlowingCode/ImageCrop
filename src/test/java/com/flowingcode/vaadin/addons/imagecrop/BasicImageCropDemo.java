@@ -2,7 +2,7 @@
  * #%L
  * Image Crop Add-on
  * %%
- * Copyright (C) 2024 Flowing Code
+ * Copyright (C) 2024-2026 Flowing Code
  * %%
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
