@@ -22,7 +22,9 @@ package com.flowingcode.vaadin.addons.imagecrop;
 
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Objects;
 
+import com.vaadin.flow.component.AttachEvent;
 import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
@@ -30,6 +32,7 @@ import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.react.ReactAdapterComponent;
+import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.shared.Registration;
 
 /**
@@ -49,6 +52,8 @@ public class ImageCrop extends ReactAdapterComponent {
   
   private static final String IMG_FULL_HEIGHT_CLASS_NAME = "img-full-height";
 
+  private static final String IMG_SRC_RESOURCE_ATTRIBUTE = "img-src";
+
   private String croppedImageDataUri;
 
   /**
@@ -60,6 +65,19 @@ public class ImageCrop extends ReactAdapterComponent {
     this.setImageSrc(src);
     this.addCroppedImageListener(this::updateCroppedImage);
     this.croppedImageDataUri = src;
+  }
+
+  /**
+   * Constructs an ImageCrop component whose image is served by the given
+   * {@link DownloadHandler}. See {@link #setImageSrc(DownloadHandler)} for the
+   * conditions under which the image is served.
+   *
+   * @param downloadHandler the handler that serves the image to be cropped
+   * @see #setImageSrc(DownloadHandler)
+   */
+  public ImageCrop(DownloadHandler downloadHandler) {
+    this.setImageSrc(downloadHandler);
+    this.addCroppedImageListener(this::updateCroppedImage);
   }
 
   /**
@@ -97,17 +115,66 @@ public class ImageCrop extends ReactAdapterComponent {
     this.croppedImageDataUri = event.getCroppedImageDataUri();
   }
 
+  @Override
+  protected void onAttach(AttachEvent attachEvent) {
+    super.onAttach(attachEvent);
+    // the resource URL is regenerated on attach (e.g. with a new UI id after a
+    // refresh with @PreserveOnRefresh), so the image source must follow it
+    if (getElement().hasAttribute(IMG_SRC_RESOURCE_ATTRIBUTE)) {
+      setState("imgSrc", getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
+    }
+  }
+
   /**
    * Sets the source of the image to be cropped.
    *
    * @param imageSrc the image source
    */
   public void setImageSrc(String imageSrc) {
+    getElement().removeAttribute(IMG_SRC_RESOURCE_ATTRIBUTE);
     setState("imgSrc", imageSrc);
   }
 
   /**
+   * Sets the source of the image to be cropped to a resource served by the given
+   * {@link DownloadHandler}.
+   *
+   * <p>
+   * The handler is registered to this component, so the image is served while this
+   * component is attached and visible, independently of any other component. Requests
+   * are also rejected while this component is disabled or inert (for instance, behind a
+   * modal dialog), unless the handler overrides
+   * {@link DownloadHandler#getDisabledUpdateMode()} or
+   * {@link DownloadHandler#isAllowInert()}.
+   *
+   * <p>
+   * Use an {@code inline()} handler, since the image is displayed rather than
+   * downloaded. When the {@linkplain #setOutputMimeType(String) output MIME type} is not
+   * set, it is detected from the file extension of the handler's
+   * {@linkplain DownloadHandler#getUrlPostfix() URL postfix}; handlers without one (such
+   * as {@code DownloadHandler.fromInputStream(...)}) fall back to {@code image/png}.
+   *
+   * <p>
+   * As with any {@code DownloadHandler} set on an element, this method must be called
+   * while a {@link com.vaadin.flow.component.UI UI} is current.
+   *
+   * @param downloadHandler the handler that serves the image to be cropped
+   */
+  public void setImageSrc(DownloadHandler downloadHandler) {
+    Objects.requireNonNull(downloadHandler, "downloadHandler must not be null");
+    getElement().setAttribute(IMG_SRC_RESOURCE_ATTRIBUTE, downloadHandler);
+    setState("imgSrc", getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
+    croppedImageDataUri = null;
+  }
+
+  /**
    * Gets the source of the image being cropped.
+   *
+   * <p>
+   * When the source was set with a {@link DownloadHandler}, this returns the internal
+   * URL of the registered resource. Passing that URL back to
+   * {@link #setImageSrc(String)} unregisters the handler, so the URL stops being
+   * served.
    *
    * @return the image source
    */
@@ -434,7 +501,11 @@ public class ImageCrop extends ReactAdapterComponent {
   /**
    * Returns the cropped image data URI.
    *
-   * @return the cropped image data URI
+   * <p>
+   * When the component is created with a {@link DownloadHandler}, this is {@code null}
+   * until the image is cropped for the first time.
+   *
+   * @return the cropped image data URI, or {@code null} if not available yet
    */
   public String getCroppedImageDataUri() {
     return this.croppedImageDataUri;
