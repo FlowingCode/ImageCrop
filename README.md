@@ -130,7 +130,10 @@ add(imageCrop);
 * Get cropped image 
 
 ```java
-Image croppedImage = new Image(imageCrop.getCroppedImageDataUri(), "cropped image")
+// null until the image is cropped
+if (imageCrop.getCroppedImageDataUri() != null) {
+  Image croppedImage = new Image(imageCrop.getCroppedImageDataUri(), "cropped image");
+}
 ```
 
 ## Special configuration when using Spring
