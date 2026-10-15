@@ -34,7 +34,7 @@ package com.flowingcode.vaadin.addons.imagecrop;
  * @param width  the width of the cropped area
  * @param height the height of the cropped area
  */
-public record Crop(String unit, int x, int y, int width, int height) {
+public record Crop(String unit, double x, double y, double width, double height) {
 
     /**
      * Returns a string representation of the Crop object.

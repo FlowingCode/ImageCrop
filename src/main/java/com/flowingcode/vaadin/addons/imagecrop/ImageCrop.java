@@ -223,9 +223,9 @@ public class ImageCrop extends ReactAdapterComponent {
    * <p>
    * Once the image has loaded, the crop is normalized to a percentage of the
    * image's natural size, so the returned unit is {@code %} even when
-   * {@link #setCrop(Crop)} was given a {@code px} crop. Because {@link Crop} holds
-   * integer values, those percentages are rounded to whole units, which on a large
-   * image is coarser than the configured pixel values.
+   * {@link #setCrop(Crop)} was given a {@code px} crop. The percentages keep their
+   * fractional part, so passing the returned crop back to {@link #setCrop(Crop)}
+   * does not move the selection.
    *
    * @return the crop dimensions
    */
