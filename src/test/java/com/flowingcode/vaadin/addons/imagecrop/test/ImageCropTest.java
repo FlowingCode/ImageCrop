@@ -21,7 +21,6 @@ import com.flowingcode.vaadin.addons.imagecrop.ImageCrop;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
-
 public class ImageCropTest {
 
   private ImageCrop imageCrop;
@@ -87,6 +86,20 @@ public class ImageCropTest {
     Crop expectedCrop = new Crop("%", 10, 10, 200, 200);
     imageCrop.setCrop(expectedCrop);
     assertEquals(expectedCrop, imageCrop.getCrop());
+  }
+
+  @Test
+  public void testGetCropKeepsSubPercentPrecision() {
+    // the client syncs the crop as a "%" crop with fractional values; on a
+    // 4000px-wide image 1% is 40px, so dropping the fraction moves the selection
+    Crop expectedCrop = new Crop("%", 12.3456, 7.89, 33.3333, 50.125);
+    imageCrop.setCrop(expectedCrop);
+
+    Crop crop = imageCrop.getCrop();
+    assertEquals(expectedCrop, crop);
+
+    imageCrop.setCrop(crop);
+    assertEquals(crop, imageCrop.getCrop());
   }
 
   @Test
