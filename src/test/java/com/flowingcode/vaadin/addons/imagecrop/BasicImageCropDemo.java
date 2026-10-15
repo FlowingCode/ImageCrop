@@ -50,7 +50,10 @@ public class BasicImageCropDemo extends VerticalLayout {
 
     getCropButton.addClickListener(e -> {
       croppedResultDiv.removeAll();
-      croppedResultDiv.add(new Image(imageCrop.getCroppedImageDataUri(), "cropped image"));
+      // there is no cropped image until the user selects an area
+      if (imageCrop.getCroppedImageDataUri() != null) {
+        croppedResultDiv.add(new Image(imageCrop.getCroppedImageDataUri(), "cropped image"));
+      }
     });
 
     add(getCropButton, new Span("Crop Result:"), croppedResultDiv);

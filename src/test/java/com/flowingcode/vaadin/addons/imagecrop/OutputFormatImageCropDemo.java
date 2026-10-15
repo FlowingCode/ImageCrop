@@ -66,6 +66,10 @@ public class OutputFormatImageCropDemo extends VerticalLayout {
     getCropButton.addClickListener(e -> {
       croppedResultDiv.removeAll();
       String dataUri = imageCrop.getCroppedImageDataUri();
+      // there is no cropped image until the user selects an area
+      if (dataUri == null) {
+        return;
+      }
       Span mimeType = new Span("Result MIME type: " + extractMimeType(dataUri));
       mimeType.getStyle().set("display", "block");
       croppedResultDiv.add(mimeType);
