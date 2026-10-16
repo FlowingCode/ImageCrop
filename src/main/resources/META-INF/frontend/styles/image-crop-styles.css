@@ -18,6 +18,13 @@
  * #L%
  */
 
-.img-full-height img {
-    height: 100vh;
+image-crop {
+    display: inline-block;
+    max-width: 100%;
+}
+
+/* Propagate the component's max-height to the image (react-image-crop
+   applies max-height: inherit to its wrapper and to the image). */
+image-crop .ReactCrop {
+    max-height: inherit;
 }
