@@ -106,6 +106,8 @@ public class UploadImageCropDemo extends Div {
     imageCrop.setCircularCrop(true);
     imageCrop.setCrop(new Crop("%", 25, 25, 50, 50)); // centered crop
     imageCrop.setKeepSelection(true);
+    // keep large images within the dialog
+    imageCrop.getStyle().set("max-height", "70vh");
 
     cropButton.addClickListener(event -> {
       newCroppedPicture = imageCrop.getCroppedImageBase64();
