@@ -37,7 +37,21 @@ import com.vaadin.flow.server.streams.DownloadHandler;
  * <a href="https://www.npmjs.com/package/react-image-crop">react-image-crop</a>
  * library.
  * This component allows users to define and manipulate crop areas on images.
- * 
+ *
+ * <p>
+ * The image is scaled down, keeping its aspect ratio, to fit the available width
+ * and the component's {@code max-height}. For instance,
+ * {@code getStyle().set("max-height", "100vh")} keeps a large image within the
+ * viewport. Images smaller than these limits are shown at their natural size.
+ * </p>
+ *
+ * <p>
+ * Only {@code max-height} values in absolute or viewport units (such as {@code px} or
+ * {@code vh}) are supported. Percentages (including {@code calc()} expressions that
+ * contain them), a {@code height} set on the component, and sizes given by the layout
+ * do not limit the image.
+ * </p>
+ *
  * @author Paola De Bartolo / Flowing Code
  */
 @NpmPackage(value = "react-image-crop", version = "11.0.6")
@@ -46,8 +60,6 @@ import com.vaadin.flow.server.streams.DownloadHandler;
 @CssImport("react-image-crop/dist/ReactCrop.css")
 @CssImport("./styles/image-crop-styles.css")
 public class ImageCrop extends ReactAdapterComponent {
-  
-  private static final String IMG_FULL_HEIGHT_CLASS_NAME = "img-full-height";
 
   private static final String IMG_SRC_RESOURCE_ATTRIBUTE = "img-src";
 
@@ -503,21 +515,6 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   public String getCroppedImageDataUri() {
     return croppedImageRevision == imageRevision ? this.croppedImageDataUri : null;
-  }
-
-  /**
-   * Sets the image to occupy the full viewport height when enabled.
-   * If {@code fullHeight} is {@code true}, applies a CSS class that
-   * sets the image height to 100vh. If {@code false}, removes the class
-   * to revert to the default height.
-   *
-   * @param fullHeight whether the image should fill the viewport height
-   */
-  public void setImageFullHeight(Boolean fullHeight) {
-    if (fullHeight)
-      this.addClassName(IMG_FULL_HEIGHT_CLASS_NAME);
-    else
-      this.removeClassName(IMG_FULL_HEIGHT_CLASS_NAME);
   }
 
   /**
