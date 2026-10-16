@@ -127,6 +127,12 @@ ImageCrop imageCrop = new ImageCrop(DownloadHandler.forClassResource(getClass(),
 add(imageCrop);
 ```
 
+* Constrain the size of large images
+
+```java
+imageCrop.getStyle().set("max-height", "70vh");
+```
+
 * Get cropped image 
 
 ```java
