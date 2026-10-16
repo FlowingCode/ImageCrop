@@ -18,6 +18,7 @@ import org.junit.Test;
 import com.flowingcode.vaadin.addons.imagecrop.Crop;
 import com.flowingcode.vaadin.addons.imagecrop.CroppedImageEvent;
 import com.flowingcode.vaadin.addons.imagecrop.ImageCrop;
+import com.vaadin.flow.component.ComponentUtil;
 import com.vaadin.flow.component.UI;
 import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
@@ -61,6 +62,41 @@ public class ImageCropTest {
   public void testSetImageSrcWithDownloadHandlerResetsCroppedImage() {
     imageCrop.setImageSrc(imageHandler());
     assertNull(imageCrop.getCroppedImageDataUri());
+  }
+
+  @Test
+  public void testSetImageSrcWithStringResetsCroppedImage() {
+    ComponentUtil.fireEvent(imageCrop,
+        new CroppedImageEvent(imageCrop, true, "data:image/png;base64,SGVsbG8gV29ybGQ="));
+    assertNotNull(imageCrop.getCroppedImageDataUri());
+    imageCrop.setImageSrc("newImageSrc");
+    assertNull(imageCrop.getCroppedImageDataUri());
+    assertNull(imageCrop.getCroppedImageBase64());
+  }
+
+  @Test
+  public void testSetSameImageSrcKeepsCroppedImage() {
+    String croppedImageDataUri = "data:image/png;base64,SGVsbG8gV29ybGQ=";
+    ComponentUtil.fireEvent(imageCrop, new CroppedImageEvent(imageCrop, true, croppedImageDataUri));
+    imageCrop.setImageSrc(imageCrop.getImageSrc());
+    assertEquals(croppedImageDataUri, imageCrop.getCroppedImageDataUri());
+  }
+
+  @Test
+  public void testSetImageSrcWithResourceUrlResetsCroppedImage() {
+    imageCrop.setImageSrc(imageHandler());
+    ComponentUtil.fireEvent(imageCrop,
+        new CroppedImageEvent(imageCrop, true, "data:image/png;base64,SGVsbG8gV29ybGQ="));
+    // passing the resource URL back unregisters the handler, so the image changes
+    imageCrop.setImageSrc(imageCrop.getImageSrc());
+    assertNull(imageCrop.getCroppedImageDataUri());
+  }
+
+  @Test
+  public void testStringConstructorHasNoCroppedImage() {
+    imageCrop = new ImageCrop("images/empty-plant.png");
+    assertNull(imageCrop.getCroppedImageDataUri());
+    assertNull(imageCrop.getCroppedImageBase64());
   }
 
   @Test
