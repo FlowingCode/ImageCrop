@@ -22,8 +22,6 @@ package com.flowingcode.vaadin.addons.imagecrop;
 
 import com.flowingcode.vaadin.addons.demo.DemoSource;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.component.select.Select;
@@ -38,7 +36,7 @@ public class OutputFormatImageCropDemo extends VerticalLayout {
 
   private static final String AUTO_DETECT = "Auto-detect";
 
-  private Div croppedResultDiv = new Div();
+  private CroppedImageResult croppedResult = new CroppedImageResult();
 
   public OutputFormatImageCropDemo() {
     add(new Span("Choose an output format and crop the image. "
@@ -61,22 +59,16 @@ public class OutputFormatImageCropDemo extends VerticalLayout {
     add(formatSelect, imageCrop);
 
     Button getCropButton = new Button("Get Cropped Image");
-    croppedResultDiv.setId("result-cropped-image-div");
-
     getCropButton.addClickListener(e -> {
-      croppedResultDiv.removeAll();
       String dataUri = imageCrop.getCroppedImageDataUri();
-      // there is no cropped image until the user selects an area
-      if (dataUri == null) {
-        return;
+      if (croppedResult.show(dataUri)) {
+        Span mimeType = new Span("Result MIME type: " + extractMimeType(dataUri));
+        mimeType.getStyle().set("display", "block");
+        croppedResult.addComponentAsFirst(mimeType);
       }
-      Span mimeType = new Span("Result MIME type: " + extractMimeType(dataUri));
-      mimeType.getStyle().set("display", "block");
-      croppedResultDiv.add(mimeType);
-      croppedResultDiv.add(new Image(dataUri, "cropped image"));
     });
 
-    add(getCropButton, new Span("Crop Result:"), croppedResultDiv);
+    add(getCropButton, new Span("Crop Result:"), croppedResult);
   }
 
   /** Reads the MIME type from the prefix of a {@code data:} URI, for display purposes. */

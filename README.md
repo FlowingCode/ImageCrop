@@ -130,10 +130,16 @@ add(imageCrop);
 * Get cropped image 
 
 ```java
-// null until the image is cropped
-if (imageCrop.getCroppedImageDataUri() != null) {
-  Image croppedImage = new Image(imageCrop.getCroppedImageDataUri(), "cropped image");
+String dataUri = imageCrop.getCroppedImageDataUri(); // null until the image is cropped
+if (dataUri != null) {
+  add(new Image(dataUri, "cropped image"));
 }
+```
+
+The cropped image is `null` until the image is cropped, either by the user or by an initial crop. To get the full image without user interaction, set an initial crop that covers it:
+
+```java
+imageCrop.setCrop(new Crop("%", 0, 0, 100, 100));
 ```
 
 ## Special configuration when using Spring
