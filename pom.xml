@@ -467,6 +467,19 @@
                 <plugins>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <configuration>
+                            <annotationProcessorPaths combine.children="append">
+                                <path>
+                                    <groupId>com.flowingcode.vaadin.addons.demo</groupId>
+                                    <artifactId>commons-demo-processor</artifactId>
+                                    <version>${flowingcode.commons.demo.version}</version>
+                                </path>
+                            </annotationProcessorPaths>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-jar-plugin</artifactId>
                         <executions>
                             <execution>
@@ -487,6 +500,14 @@
                     </plugin>
                 </plugins>
             </build>
+            <dependencies>
+                <dependency>
+                    <groupId>com.flowingcode.vaadin.addons.demo</groupId>
+                    <artifactId>commons-demo-processor</artifactId>
+                    <version>${flowingcode.commons.demo.version}</version>
+                    <scope>provided</scope>
+                </dependency>
+            </dependencies>
         </profile>
 
         <profile>
