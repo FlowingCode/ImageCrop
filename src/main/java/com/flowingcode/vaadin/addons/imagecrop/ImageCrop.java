@@ -55,6 +55,9 @@ public class ImageCrop extends ReactAdapterComponent {
 
   private String croppedImageDataUri;
 
+  // source of the image that croppedImageDataUri was cropped from
+  private String croppedImageSrc;
+
   /**
    * Constructs an ImageCrop component with the given image URL.
    *
@@ -98,6 +101,7 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   private void updateCroppedImage(CroppedImageEvent event) {
     this.croppedImageDataUri = event.getCroppedImageDataUri();
+    this.croppedImageSrc = event.getImageSrc();
   }
 
   @Override
@@ -106,7 +110,12 @@ public class ImageCrop extends ReactAdapterComponent {
     // the resource URL is regenerated on attach (e.g. with a new UI id after a
     // refresh with @PreserveOnRefresh), so the image source must follow it
     if (getElement().hasAttribute(IMG_SRC_RESOURCE_ATTRIBUTE)) {
-      setState("imgSrc", getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
+      String resourceSrc = getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE);
+      // same image under a new URL, so the cropped image is still valid
+      if (croppedImageSrc != null && croppedImageSrc.equals(getImageSrc())) {
+        croppedImageSrc = resourceSrc;
+      }
+      setState("imgSrc", resourceSrc);
     }
   }
 
@@ -116,14 +125,8 @@ public class ImageCrop extends ReactAdapterComponent {
    * @param imageSrc the image source
    */
   public void setImageSrc(String imageSrc) {
-    // the same image is not reloaded, so the client would not re-crop it
-    boolean sameImage = !getElement().hasAttribute(IMG_SRC_RESOURCE_ATTRIBUTE)
-        && Objects.equals(imageSrc, getImageSrc());
     getElement().removeAttribute(IMG_SRC_RESOURCE_ATTRIBUTE);
     setState("imgSrc", imageSrc);
-    if (!sameImage) {
-      croppedImageDataUri = null;
-    }
   }
 
   /**
@@ -155,7 +158,6 @@ public class ImageCrop extends ReactAdapterComponent {
     Objects.requireNonNull(downloadHandler, "downloadHandler must not be null");
     getElement().setAttribute(IMG_SRC_RESOURCE_ATTRIBUTE, downloadHandler);
     setState("imgSrc", getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
-    croppedImageDataUri = null;
   }
 
   /**
@@ -493,14 +495,18 @@ public class ImageCrop extends ReactAdapterComponent {
    * Returns the cropped image data URI.
    *
    * <p>
-   * This is {@code null} until the current image is cropped for the first time. Changing
-   * the image source resets it to {@code null}; it is set again when the user crops the
-   * new image, or as soon as the new image loads if a crop is already defined (either
-   * with {@link #setCrop(Crop)} or the selection kept from the previous image).
+   * Only a crop of the current {@linkplain #getImageSrc() image source} is returned, so
+   * this is {@code null} until the current image is cropped for the first time. After
+   * the image source changes, it is set again when the user crops the new image, or as
+   * soon as the new image loads if a crop is already defined (either with
+   * {@link #setCrop(Crop)} or the selection kept from the previous image).
    *
    * @return the cropped image data URI, or {@code null} if not available yet
    */
   public String getCroppedImageDataUri() {
+    if (croppedImageSrc == null || !croppedImageSrc.equals(getImageSrc())) {
+      return null;
+    }
     return this.croppedImageDataUri;
   }
 

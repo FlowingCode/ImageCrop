@@ -32,6 +32,8 @@ public class CroppedImageEvent extends ComponentEvent<ImageCrop> {
 
   private String croppedImageDataUri;
 
+  private String imageSrc;
+
   /**
    * Constructs a new CroppedImageEvent.
    *
@@ -39,11 +41,26 @@ public class CroppedImageEvent extends ComponentEvent<ImageCrop> {
    * @param fromClient <code>true</code> if the event originated from the client-side,
    *        <code>false</code> otherwise
    * @param croppedImageDataUri the data URL of the cropped image
+   * @param imageSrc the source of the image that was cropped
    */
   public CroppedImageEvent(ImageCrop source, boolean fromClient,
-      @EventData("event.detail.croppedImageDataUri") String croppedImageDataUri) {
+      @EventData("event.detail.croppedImageDataUri") String croppedImageDataUri,
+      @EventData("event.detail.imageSrc") String imageSrc) {
     super(source, fromClient);
     this.croppedImageDataUri = croppedImageDataUri;
+    this.imageSrc = imageSrc;
+  }
+
+  /**
+   * Returns the source of the image that was cropped, as it was set with
+   * {@link ImageCrop#setImageSrc(String)}. It may differ from the current
+   * {@linkplain ImageCrop#getImageSrc() image source} if the source changed
+   * while the image was being cropped.
+   *
+   * @return the source of the cropped image
+   */
+  public String getImageSrc() {
+    return this.imageSrc;
   }
 
   /**

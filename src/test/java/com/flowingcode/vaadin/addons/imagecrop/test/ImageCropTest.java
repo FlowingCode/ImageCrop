@@ -24,6 +24,8 @@ import com.vaadin.flow.server.streams.DownloadHandler;
 import com.vaadin.flow.server.streams.DownloadResponse;
 public class ImageCropTest {
 
+  private static final String CROPPED_IMAGE = "data:image/png;base64,SGVsbG8gV29ybGQ=";
+
   private ImageCrop imageCrop;
 
   // keeps the current UI strongly reachable during the test
@@ -59,37 +61,45 @@ public class ImageCropTest {
   }
 
   @Test
+  public void testCroppedImageOfCurrentSource() {
+    cropImage("dummyImageSrc");
+    assertEquals(CROPPED_IMAGE, imageCrop.getCroppedImageDataUri());
+    assertNotNull(imageCrop.getCroppedImageBase64());
+  }
+
+  @Test
   public void testSetImageSrcWithDownloadHandlerResetsCroppedImage() {
+    cropImage("dummyImageSrc");
     imageCrop.setImageSrc(imageHandler());
     assertNull(imageCrop.getCroppedImageDataUri());
   }
 
   @Test
   public void testSetImageSrcWithStringResetsCroppedImage() {
-    ComponentUtil.fireEvent(imageCrop,
-        new CroppedImageEvent(imageCrop, true, "data:image/png;base64,SGVsbG8gV29ybGQ="));
-    assertNotNull(imageCrop.getCroppedImageDataUri());
+    cropImage("dummyImageSrc");
     imageCrop.setImageSrc("newImageSrc");
     assertNull(imageCrop.getCroppedImageDataUri());
     assertNull(imageCrop.getCroppedImageBase64());
   }
 
   @Test
-  public void testSetSameImageSrcKeepsCroppedImage() {
-    String croppedImageDataUri = "data:image/png;base64,SGVsbG8gV29ybGQ=";
-    ComponentUtil.fireEvent(imageCrop, new CroppedImageEvent(imageCrop, true, croppedImageDataUri));
-    imageCrop.setImageSrc(imageCrop.getImageSrc());
-    assertEquals(croppedImageDataUri, imageCrop.getCroppedImageDataUri());
+  public void testLateCroppedImageOfPreviousSourceIsIgnored() {
+    imageCrop.setImageSrc("newImageSrc");
+    cropImage("dummyImageSrc");
+    assertNull(imageCrop.getCroppedImageDataUri());
   }
 
   @Test
-  public void testSetImageSrcWithResourceUrlResetsCroppedImage() {
-    imageCrop.setImageSrc(imageHandler());
+  public void testSetPreviousImageSrcBackKeepsCroppedImage() {
+    cropImage("dummyImageSrc");
+    imageCrop.setImageSrc("newImageSrc");
+    imageCrop.setImageSrc("dummyImageSrc");
+    assertEquals(CROPPED_IMAGE, imageCrop.getCroppedImageDataUri());
+  }
+
+  private void cropImage(String imageSrc) {
     ComponentUtil.fireEvent(imageCrop,
-        new CroppedImageEvent(imageCrop, true, "data:image/png;base64,SGVsbG8gV29ybGQ="));
-    // passing the resource URL back unregisters the handler, so the image changes
-    imageCrop.setImageSrc(imageCrop.getImageSrc());
-    assertNull(imageCrop.getCroppedImageDataUri());
+        new CroppedImageEvent(imageCrop, true, CROPPED_IMAGE, imageSrc));
   }
 
   @Test
