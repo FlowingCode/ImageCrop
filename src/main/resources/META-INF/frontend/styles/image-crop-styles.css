@@ -18,13 +18,11 @@
  * #L%
  */
 
+/* min-width/min-height let the component shrink in flex layouts, so the image
+   is fitted to the space the layout gives it (see fitImageHeight). */
 image-crop {
     display: inline-block;
     max-width: 100%;
-}
-
-/* Propagate the component's max-height to the image (react-image-crop
-   applies max-height: inherit to its wrapper and to the image). */
-image-crop .ReactCrop {
-    max-height: inherit;
+    min-width: 0;
+    min-height: 0;
 }

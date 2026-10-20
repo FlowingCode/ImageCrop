@@ -41,8 +41,9 @@ import com.vaadin.flow.shared.Registration;
  * This component allows users to define and manipulate crop areas on images.
  *
  * <p>
- * The image is scaled down, keeping its aspect ratio, to fit the available width
- * and the component's {@code max-height}. For instance,
+ * The image is scaled down, keeping its aspect ratio, to fit the component's width
+ * and height, whether they are set on the component (a {@code height} or a
+ * {@code max-height} in any unit) or given by the layout it is in. For instance,
  * {@code getStyle().set("max-height", "100vh")} keeps a large image within the
  * viewport. Images smaller than these limits are shown at their natural size.
  * </p>
