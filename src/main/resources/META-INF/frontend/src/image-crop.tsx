@@ -145,6 +145,40 @@ class ImageCropElement extends ReactAdapterElement {
 				: percentCrop;
 
 		/**
+		* Fits the image to the height the component actually gets, however it is
+		* defined: a height, a max-height in any unit, or the layout. CSS alone can't
+		* do it, since react-image-crop inherits max-height as written, so a
+		* percentage would resolve against an auto-height parent and be ignored.
+		*
+		* The limit is cleared before measuring, so the component is measured without
+		* it, and is set in pixels only when the image is taller than the available
+		* space. Smaller images are never upscaled.
+		*/
+		const fitImageHeight = () => {
+			const cropElement = this.querySelector<HTMLElement>(".ReactCrop");
+			const img = imgRef.current;
+			if (!cropElement || !img) {
+				return;
+			}
+			cropElement.style.maxHeight = "";
+			const style = getComputedStyle(this);
+			const available = this.clientHeight - parseFloat(style.paddingTop) - parseFloat(style.paddingBottom);
+			if (img.getBoundingClientRect().height > available + 0.5) {
+				cropElement.style.maxHeight = `${available}px`;
+			}
+		};
+
+		// Refit when the component or its container is resized.
+		useEffect(() => {
+			const observer = new ResizeObserver(() => fitImageHeight());
+			observer.observe(this);
+			if (this.parentElement) {
+				observer.observe(this.parentElement);
+			}
+			return () => observer.disconnect();
+		}, []);
+
+		/**
 		* Normalizes the configured crop when the image loads. The crop is kept as a
 		* percentage of the image's natural size, so both the on-screen selection and
 		* the exported image are independent of how the browser scales the image on
@@ -156,6 +190,7 @@ class ImageCropElement extends ReactAdapterElement {
 		* below). setCrop's Javadoc documents the difference.
 		*/
 		const onImageLoad = () => {
+			fitImageHeight();
 			const img = imgRef.current;
 			if (!img || !crop) {
 				return;

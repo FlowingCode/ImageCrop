@@ -18,6 +18,11 @@
  * #L%
  */
 
-.img-full-height img {
-    height: 100vh;
+/* min-width/min-height let the component shrink in flex layouts, so the image
+   is fitted to the space the layout gives it (see fitImageHeight). */
+image-crop {
+    display: inline-block;
+    max-width: 100%;
+    min-width: 0;
+    min-height: 0;
 }

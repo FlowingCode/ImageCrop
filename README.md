@@ -127,6 +127,14 @@ ImageCrop imageCrop = new ImageCrop(DownloadHandler.forClassResource(getClass(),
 add(imageCrop);
 ```
 
+* Constrain the size of large images
+
+The image is scaled down to fit the component's size, whether it is set with `height` or `max-height` (in any unit) or given by the layout.
+
+```java
+imageCrop.getStyle().set("max-height", "70vh");
+```
+
 * Get cropped image 
 
 ```java
