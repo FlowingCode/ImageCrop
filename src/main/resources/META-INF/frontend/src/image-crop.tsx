@@ -90,6 +90,8 @@ class ImageCropElement extends ReactAdapterElement {
 
 		const [crop, setCrop] = hooks.useState<Crop>("crop");
 		const [imgSrc] = hooks.useState<string>("imgSrc");
+		// incremented by the server each time the image changes
+		const [imgRev] = hooks.useState<number>("imgRev", 0);
 		const imgRef = useRef<HTMLImageElement>(null);
 		const [imgAlt] = hooks.useState<string>("imgAlt");
 		const [aspect] = hooks.useState<number>("aspect");
@@ -159,6 +161,7 @@ class ImageCropElement extends ReactAdapterElement {
 			// The image whose pixels are now drawn; until the next load, every
 			// cropped image comes from it, even if imgSrc has already changed.
 			this.loadedImgSrc = imgSrc;
+			this.loadedImgRev = imgRev;
 			const img = imgRef.current;
 			if (!img || !crop) {
 				return;
@@ -255,13 +258,16 @@ class ImageCropElement extends ReactAdapterElement {
 	 */
 	private loadedImgSrc?: string;
 
+	/** Revision (imgRev) of the image currently drawn, recorded on load like loadedImgSrc. */
+	private loadedImgRev?: number;
+
 	private fireCroppedImageEvent(croppedImageDataUri: string) {
 		this.dispatchEvent(
 			new CustomEvent("cropped-image", {
 				detail: {
 					croppedImageDataUri: croppedImageDataUri,
 					// lets the server discard a crop of an image that is no longer the source
-					imageSrc: this.loadedImgSrc
+					imageRevision: this.loadedImgRev
 				},
 			})
 		);
@@ -293,7 +299,7 @@ class ImageCropElement extends ReactAdapterElement {
 				// convertToPixelCrop returns a "px" crop unchanged: it would keep the
 				// configured size, pass the check below and draw a not-yet-loaded image,
 				// firing a fully transparent image through "cropped-image".
-				if (!image.naturalWidth || !image.naturalHeight || this.loadedImgSrc === undefined) {
+				if (!image.naturalWidth || !image.naturalHeight || this.loadedImgRev === undefined) {
 					return;
 				}
 

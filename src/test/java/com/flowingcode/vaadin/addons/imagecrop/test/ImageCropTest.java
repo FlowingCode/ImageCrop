@@ -62,44 +62,59 @@ public class ImageCropTest {
 
   @Test
   public void testCroppedImageOfCurrentSource() {
-    cropImage("dummyImageSrc");
+    cropImage(imageRevision());
     assertEquals(CROPPED_IMAGE, imageCrop.getCroppedImageDataUri());
     assertNotNull(imageCrop.getCroppedImageBase64());
   }
 
   @Test
   public void testSetImageSrcWithDownloadHandlerResetsCroppedImage() {
-    cropImage("dummyImageSrc");
+    cropImage(imageRevision());
     imageCrop.setImageSrc(imageHandler());
     assertNull(imageCrop.getCroppedImageDataUri());
   }
 
   @Test
   public void testSetImageSrcWithStringResetsCroppedImage() {
-    cropImage("dummyImageSrc");
+    cropImage(imageRevision());
     imageCrop.setImageSrc("newImageSrc");
     assertNull(imageCrop.getCroppedImageDataUri());
     assertNull(imageCrop.getCroppedImageBase64());
   }
 
   @Test
-  public void testLateCroppedImageOfPreviousSourceIsIgnored() {
-    imageCrop.setImageSrc("newImageSrc");
-    cropImage("dummyImageSrc");
-    assertNull(imageCrop.getCroppedImageDataUri());
-  }
-
-  @Test
-  public void testSetPreviousImageSrcBackKeepsCroppedImage() {
-    cropImage("dummyImageSrc");
-    imageCrop.setImageSrc("newImageSrc");
+  public void testSetSameImageSrcKeepsCroppedImage() {
+    cropImage(imageRevision());
     imageCrop.setImageSrc("dummyImageSrc");
     assertEquals(CROPPED_IMAGE, imageCrop.getCroppedImageDataUri());
   }
 
-  private void cropImage(String imageSrc) {
+  @Test
+  public void testLateCroppedImageOfPreviousSourceIsIgnored() {
+    int previousRevision = imageRevision();
+    imageCrop.setImageSrc("newImageSrc");
+    cropImage(previousRevision);
+    assertNull(imageCrop.getCroppedImageDataUri());
+  }
+
+  @Test
+  public void testSetPreviousImageSrcBackCountsAsNewImage() {
+    cropImage(imageRevision());
+    imageCrop.setImageSrc("newImageSrc");
+    imageCrop.setImageSrc("dummyImageSrc");
+    // the client reloads the image and re-crops it if a crop is defined
+    assertNull(imageCrop.getCroppedImageDataUri());
+  }
+
+  /** The revision of the current image, as the client reads it from the component state. */
+  private int imageRevision() {
+    return imageCrop.getElement().getProperty("imgRev", -1);
+  }
+
+  /** Simulates a cropped-image event sent by the client for the given image revision. */
+  private void cropImage(int imageRevision) {
     ComponentUtil.fireEvent(imageCrop,
-        new CroppedImageEvent(imageCrop, true, CROPPED_IMAGE, imageSrc));
+        new CroppedImageEvent(imageCrop, true, CROPPED_IMAGE, imageRevision));
   }
 
   @Test
@@ -177,16 +192,6 @@ public class ImageCropTest {
   @Test
   public void testGetOutputQualityDefaultsToOneWhenUnset() {
     assertEquals(1.0, imageCrop.getOutputQuality(), 0.0);
-  }
-
-  @Test
-  public void testEncodedCroppedImageEvent() {
-    String expectedCroppedImageUri = "croppedImageUri";
-    CroppedImageEvent event = mock(CroppedImageEvent.class);
-    when(event.getCroppedImageDataUri()).thenReturn(expectedCroppedImageUri);
-    imageCrop = mock(ImageCrop.class);
-    when(imageCrop.getCroppedImageDataUri()).thenReturn(expectedCroppedImageUri);
-    assertEquals(expectedCroppedImageUri, imageCrop.getCroppedImageDataUri());
   }
 
   @Test
