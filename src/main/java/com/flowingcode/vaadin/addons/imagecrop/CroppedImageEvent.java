@@ -26,11 +26,14 @@ import com.vaadin.flow.component.EventData;
 
 /**
  * Represents an event triggered when an image is cropped and encoded.
+ * This event is for internal use only.
  */
 @DomEvent("cropped-image")
 public class CroppedImageEvent extends ComponentEvent<ImageCrop> {
 
   private String croppedImageDataUri;
+
+  private int imageRevision;
 
   /**
    * Constructs a new CroppedImageEvent.
@@ -39,11 +42,19 @@ public class CroppedImageEvent extends ComponentEvent<ImageCrop> {
    * @param fromClient <code>true</code> if the event originated from the client-side,
    *        <code>false</code> otherwise
    * @param croppedImageDataUri the data URL of the cropped image
+   * @param imageRevision the revision of the image that was cropped
    */
   public CroppedImageEvent(ImageCrop source, boolean fromClient,
-      @EventData("event.detail.croppedImageDataUri") String croppedImageDataUri) {
+      @EventData("event.detail.croppedImageDataUri") String croppedImageDataUri,
+      @EventData("event.detail.imageRevision") int imageRevision) {
     super(source, fromClient);
     this.croppedImageDataUri = croppedImageDataUri;
+    this.imageRevision = imageRevision;
+  }
+
+  /** Returns the revision of the image that was cropped. */
+  int getImageRevision() {
+    return this.imageRevision;
   }
 
   /**

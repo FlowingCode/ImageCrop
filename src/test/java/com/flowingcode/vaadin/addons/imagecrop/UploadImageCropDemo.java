@@ -108,6 +108,11 @@ public class UploadImageCropDemo extends Div {
     imageCrop.setKeepSelection(true);
 
     cropButton.addClickListener(event -> {
+      // there is no cropped image until the image is loaded and an area is selected
+      if (imageCrop.getCroppedImageDataUri() == null) {
+        Notification.show("Select an area first", 3000, Notification.Position.MIDDLE);
+        return;
+      }
       newCroppedPicture = imageCrop.getCroppedImageBase64();
       avatar.setImage(imageCrop.getCroppedImageDataUri());
       dialog.close();
