@@ -22,8 +22,6 @@ package com.flowingcode.vaadin.addons.imagecrop;
 
 import com.flowingcode.vaadin.addons.demo.DemoSource;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -35,7 +33,7 @@ import com.vaadin.flow.router.Route;
 @Route(value = "image-crop/basic", layout = ImageCropDemoView.class)
 public class BasicImageCropDemo extends VerticalLayout {
 
-  private Div croppedResultDiv = new Div();
+  private CroppedImageResult croppedResult = new CroppedImageResult();
 
   public BasicImageCropDemo() {
     add(new Span("Select a portion of the picture to crop: "));
@@ -46,14 +44,9 @@ public class BasicImageCropDemo extends VerticalLayout {
 
     Button getCropButton = new Button("Get Cropped Image");
 
-    croppedResultDiv.setId("result-cropped-image-div");
+    getCropButton.addClickListener(e -> croppedResult.show(imageCrop.getCroppedImageDataUri()));
 
-    getCropButton.addClickListener(e -> {
-      croppedResultDiv.removeAll();
-      croppedResultDiv.add(new Image(imageCrop.getCroppedImageDataUri(), "cropped image"));
-    });
-
-    add(getCropButton, new Span("Crop Result:"), croppedResultDiv);
+    add(getCropButton, new Span("Crop Result:"), croppedResult);
   }
 
 }

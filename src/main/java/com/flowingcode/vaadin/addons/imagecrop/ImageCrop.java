@@ -25,14 +25,12 @@ import java.util.Base64;
 import java.util.Objects;
 
 import com.vaadin.flow.component.AttachEvent;
-import com.vaadin.flow.component.ComponentEventListener;
 import com.vaadin.flow.component.Tag;
 import com.vaadin.flow.component.dependency.CssImport;
 import com.vaadin.flow.component.dependency.JsModule;
 import com.vaadin.flow.component.dependency.NpmPackage;
 import com.vaadin.flow.component.react.ReactAdapterComponent;
 import com.vaadin.flow.server.streams.DownloadHandler;
-import com.vaadin.flow.shared.Registration;
 
 /**
  * Component for cropping images based on
@@ -53,7 +51,15 @@ public class ImageCrop extends ReactAdapterComponent {
 
   private static final String IMG_SRC_RESOURCE_ATTRIBUTE = "img-src";
 
+  private static final String IMG_SRC_STATE = "imgSrc";
+
   private String croppedImageDataUri;
+
+  // incremented each time the image changes, so that a crop can be matched to its image
+  private int imageRevision;
+
+  // revision of the image that croppedImageDataUri was cropped from
+  private int croppedImageRevision;
 
   /**
    * Constructs an ImageCrop component with the given image URL.
@@ -62,8 +68,7 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   public ImageCrop(String src) {
     this.setImageSrc(src);
-    this.addCroppedImageListener(this::updateCroppedImage);
-    this.croppedImageDataUri = src;
+    addListener(CroppedImageEvent.class, this::updateCroppedImage);
   }
 
   /**
@@ -76,20 +81,7 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   public ImageCrop(DownloadHandler downloadHandler) {
     this.setImageSrc(downloadHandler);
-    this.addCroppedImageListener(this::updateCroppedImage);
-  }
-
-  /**
-   * Adds a listener for the {@link CroppedImageEvent} fired when the
-   * cropped image is updated.
-   *
-   * @param listener the listener to be added
-   * @return a registration for the listener, which can be used to remove the
-   *         listener
-   */
-  protected Registration addCroppedImageListener(
-      ComponentEventListener<CroppedImageEvent> listener) {
-    return this.addListener(CroppedImageEvent.class, listener);
+    addListener(CroppedImageEvent.class, this::updateCroppedImage);
   }
 
   /**
@@ -99,15 +91,23 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   private void updateCroppedImage(CroppedImageEvent event) {
     this.croppedImageDataUri = event.getCroppedImageDataUri();
+    this.croppedImageRevision = event.getImageRevision();
+  }
+
+  /** Marks the image as changed, so that crops of the previous image are discarded. */
+  private void nextImageRevision() {
+    imageRevision++;
+    setState("imgRev", imageRevision);
   }
 
   @Override
   protected void onAttach(AttachEvent attachEvent) {
     super.onAttach(attachEvent);
     // the resource URL is regenerated on attach (e.g. with a new UI id after a
-    // refresh with @PreserveOnRefresh), so the image source must follow it
+    // refresh with @PreserveOnRefresh), so the image source must follow it; the
+    // image itself is the same, so its revision is kept
     if (getElement().hasAttribute(IMG_SRC_RESOURCE_ATTRIBUTE)) {
-      setState("imgSrc", getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
+      setState(IMG_SRC_STATE, getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
     }
   }
 
@@ -117,8 +117,12 @@ public class ImageCrop extends ReactAdapterComponent {
    * @param imageSrc the image source
    */
   public void setImageSrc(String imageSrc) {
+    // the browser only reloads (and re-crops) the image when its source changes
+    if (!Objects.equals(imageSrc, getImageSrc())) {
+      nextImageRevision();
+    }
     getElement().removeAttribute(IMG_SRC_RESOURCE_ATTRIBUTE);
-    setState("imgSrc", imageSrc);
+    setState(IMG_SRC_STATE, imageSrc);
   }
 
   /**
@@ -148,9 +152,10 @@ public class ImageCrop extends ReactAdapterComponent {
    */
   public void setImageSrc(DownloadHandler downloadHandler) {
     Objects.requireNonNull(downloadHandler, "downloadHandler must not be null");
+    // each handler is served under a new URL
+    nextImageRevision();
     getElement().setAttribute(IMG_SRC_RESOURCE_ATTRIBUTE, downloadHandler);
-    setState("imgSrc", getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
-    croppedImageDataUri = null;
+    setState(IMG_SRC_STATE, getElement().getAttribute(IMG_SRC_RESOURCE_ATTRIBUTE));
   }
 
   /**
@@ -165,7 +170,7 @@ public class ImageCrop extends ReactAdapterComponent {
    * @return the image source
    */
   public String getImageSrc() {
-    return getState("imgSrc", String.class);
+    return getState(IMG_SRC_STATE, String.class);
   }
 
    /**
@@ -488,13 +493,16 @@ public class ImageCrop extends ReactAdapterComponent {
    * Returns the cropped image data URI.
    *
    * <p>
-   * When the component is created with a {@link DownloadHandler}, this is {@code null}
-   * until the image is cropped for the first time.
+   * Only a crop of the current {@linkplain #getImageSrc() image source} is returned, so
+   * this is {@code null} until the current image is cropped for the first time. After
+   * the image source changes, it is set again when the user crops the new image, or as
+   * soon as the new image loads if a crop is already defined (either with
+   * {@link #setCrop(Crop)} or the selection kept from the previous image).
    *
    * @return the cropped image data URI, or {@code null} if not available yet
    */
   public String getCroppedImageDataUri() {
-    return this.croppedImageDataUri;
+    return croppedImageRevision == imageRevision ? this.croppedImageDataUri : null;
   }
 
   /**
@@ -522,7 +530,8 @@ public class ImageCrop extends ReactAdapterComponent {
    * https://github.com/F0rce/cropper
    * </p>
    * 
-   * @return byte[] the decoded byte array of the cropped image
+   * @return the decoded bytes of the cropped image, or {@code null} if the image has not
+   *         been cropped yet
    */
   public byte[] getCroppedImageBase64() {
     String croppedDataUri = this.getCroppedImageDataUri();

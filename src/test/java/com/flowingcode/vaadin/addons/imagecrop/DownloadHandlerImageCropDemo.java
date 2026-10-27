@@ -22,8 +22,6 @@ package com.flowingcode.vaadin.addons.imagecrop;
 
 import com.flowingcode.vaadin.addons.demo.DemoSource;
 import com.vaadin.flow.component.button.Button;
-import com.vaadin.flow.component.html.Div;
-import com.vaadin.flow.component.html.Image;
 import com.vaadin.flow.component.html.Span;
 import com.vaadin.flow.component.orderedlayout.VerticalLayout;
 import com.vaadin.flow.router.PageTitle;
@@ -36,7 +34,7 @@ import com.vaadin.flow.server.streams.DownloadHandler;
 @Route(value = "image-crop/download-handler", layout = ImageCropDemoView.class)
 public class DownloadHandlerImageCropDemo extends VerticalLayout {
 
-  private Div croppedResultDiv = new Div();
+  private CroppedImageResult croppedResult = new CroppedImageResult();
 
   public DownloadHandlerImageCropDemo() {
     add(new Span("Select a portion of the picture to crop: "));
@@ -50,17 +48,9 @@ public class DownloadHandlerImageCropDemo extends VerticalLayout {
 
     Button getCropButton = new Button("Get Cropped Image");
 
-    croppedResultDiv.setId("result-cropped-image-div");
+    getCropButton.addClickListener(e -> croppedResult.show(imageCrop.getCroppedImageDataUri()));
 
-    getCropButton.addClickListener(e -> {
-      croppedResultDiv.removeAll();
-      // there is no cropped image until the user selects an area
-      if (imageCrop.getCroppedImageDataUri() != null) {
-        croppedResultDiv.add(new Image(imageCrop.getCroppedImageDataUri(), "cropped image"));
-      }
-    });
-
-    add(getCropButton, new Span("Crop Result:"), croppedResultDiv);
+    add(getCropButton, new Span("Crop Result:"), croppedResult);
   }
 
 }

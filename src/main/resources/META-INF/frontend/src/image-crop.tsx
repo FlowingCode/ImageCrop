@@ -90,6 +90,8 @@ class ImageCropElement extends ReactAdapterElement {
 
 		const [crop, setCrop] = hooks.useState<Crop>("crop");
 		const [imgSrc] = hooks.useState<string>("imgSrc");
+		// incremented by the server each time the image changes
+		const [imgRev] = hooks.useState<number>("imgRev", 0);
 		const imgRef = useRef<HTMLImageElement>(null);
 		const [imgAlt] = hooks.useState<string>("imgAlt");
 		const [aspect] = hooks.useState<number>("aspect");
@@ -156,6 +158,10 @@ class ImageCropElement extends ReactAdapterElement {
 		* below). setCrop's Javadoc documents the difference.
 		*/
 		const onImageLoad = () => {
+			// The image whose pixels are now drawn; until the next load, every
+			// cropped image comes from it, even if imgSrc has already changed.
+			this.loadedImgSrc = imgSrc;
+			this.loadedImgRev = imgRev;
 			const img = imgRef.current;
 			if (!img || !crop) {
 				return;
@@ -245,11 +251,23 @@ class ImageCropElement extends ReactAdapterElement {
 		);
 	}
 
+	/**
+	 * Source of the image currently drawn, as set by the server (imgSrc). Recorded
+	 * on load rather than read from image.src, which already points to the new
+	 * source while the previous image is still displayed (see issue #41).
+	 */
+	private loadedImgSrc?: string;
+
+	/** Revision (imgRev) of the image currently drawn, recorded on load like loadedImgSrc. */
+	private loadedImgRev?: number;
+
 	private fireCroppedImageEvent(croppedImageDataUri: string) {
 		this.dispatchEvent(
 			new CustomEvent("cropped-image", {
 				detail: {
-					croppedImageDataUri: croppedImageDataUri
+					croppedImageDataUri: croppedImageDataUri,
+					// lets the server discard a crop of an image that is no longer the source
+					imageRevision: this.loadedImgRev
 				},
 			})
 		);
@@ -281,7 +299,7 @@ class ImageCropElement extends ReactAdapterElement {
 				// convertToPixelCrop returns a "px" crop unchanged: it would keep the
 				// configured size, pass the check below and draw a not-yet-loaded image,
 				// firing a fully transparent image through "cropped-image".
-				if (!image.naturalWidth || !image.naturalHeight) {
+				if (!image.naturalWidth || !image.naturalHeight || this.loadedImgRev === undefined) {
 					return;
 				}
 
@@ -336,7 +354,8 @@ class ImageCropElement extends ReactAdapterElement {
 					ctx.restore();
 
 					// encode the cropped image using the resolved output format
-					const outputType = resolveOutputType(this.outputMimeType, image.src, this.circularCrop);
+					// detected from the image actually drawn, not from image.src (see loadedImgSrc)
+					const outputType = resolveOutputType(this.outputMimeType, this.loadedImgSrc, this.circularCrop);
 					let croppedImageDataUri = canvas.toDataURL(outputType, this.outputQuality ?? 1.0);
 
 					// dispatch the event containing cropped image
