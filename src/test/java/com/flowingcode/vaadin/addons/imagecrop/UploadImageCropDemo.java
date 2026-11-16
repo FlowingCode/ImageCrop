@@ -94,7 +94,6 @@ public class UploadImageCropDemo extends Div {
     Dialog dialog = new Dialog();
     dialog.setCloseOnOutsideClick(false);
     dialog.setMaxHeight("100%");
-    dialog.setMaxWidth(dialog.getHeight());
 
     Button cropButton = new Button("Crop image");
     Button dialogCancelButton = new Button("Cancel");
