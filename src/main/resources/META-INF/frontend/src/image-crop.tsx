@@ -86,6 +86,14 @@ function resolveOutputType(requested: string | null | undefined, src: string | n
 
 class ImageCropElement extends ReactAdapterElement {
 
+	/*
+	 * State properties defined at runtime by hooks.useState() and read via this.xxx
+	 * outside render(). Declared with "declare" so no class field shadows them.
+	 */
+	declare circularCrop: boolean;
+	declare outputMimeType?: string;
+	declare outputQuality?: number;
+
 	protected render(hooks: RenderHooks): ReactElement<any, string | JSXElementConstructor<any>> | null {
 
 		const [crop, setCrop] = hooks.useState<Crop>("crop");
