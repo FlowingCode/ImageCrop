@@ -54,7 +54,7 @@ Add the following dependencies in your pom.xml file:
 </dependency>
 ```
 
-For SNAPSHOT versions see [here](https://maven.flowingcode.com/snapshots/).
+Release versions are available from Maven Central repository. For SNAPSHOT versions see [here](https://maven.flowingcode.com/snapshots/).
 
 ## Building and running demo
 
